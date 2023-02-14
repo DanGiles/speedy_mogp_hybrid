@@ -12,7 +12,7 @@ def read_data(file, t, oper, code):
     return values
 
 def loop(codes, base_file, timestamps, oper, input_array):
-    rootdir = '/home/users/dangiles/variable/automation/'
+    rootdir = ''
     lead = '20200101T0000Z_'
     after = '_km3p3_RA2M_32x32sampling_hence_14x14_time'
     site = 0
@@ -32,7 +32,7 @@ def loop(codes, base_file, timestamps, oper, input_array):
     return
 
 def loop_2d(codes,  base_file, timestamps, oper, input_array):
-    rootdir = '/home/users/dangiles/variable/automation/'
+    rootdir = ''
     lead = '20200101T0000Z_'
     after = '_km3p3_RA2M_32x32sampling_hence_14x14_time'
     site = 0 

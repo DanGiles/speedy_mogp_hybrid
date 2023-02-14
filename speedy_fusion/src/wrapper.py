@@ -169,7 +169,7 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
 
 def main():
     # Train the GP Model
-    plot_folder = os.path.join("/home/ucakdpg/Scratch/mogp-speedy", "training_500")
+    plot_folder = os.path.join("", "")
     n_train = 500
     print("Starting Training")
     trained_gp, test_UM = train_mogp(plot_folder, n_train)
@@ -179,15 +179,14 @@ def main():
 
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
-    SPEEDY = "/home/ucakdpg/speedy"
+    SPEEDY = ""
     nature_dir = os.path.join(SPEEDY, "DATA", "nature")
-    output_folder = "/home/ucakdpg/Scratch/mogp-speedy"
+    output_folder = ""
     data_folder = os.path.join(output_folder, "DATA")
 
     IDate = "1982010100"
     dtDate = "1982010106"
     number_time_steps = (3652*4) 
-    #number_time_steps = 10
     nlon = 96
     nlat = 48
     nlev = 8
@@ -201,7 +200,7 @@ def main():
     lsm = read_const_grd(os.path.join(SPEEDY,"model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
-    rho = np.loadtxt("/home/ucakdpg/Scratch/mogp-speedy/constants/density.txt")
+    rho = np.loadtxt("constants/density.txt")
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
     # Main time loop
@@ -230,7 +229,7 @@ def main():
         data = read_grd(file, nlon, nlat, nlev)
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    np.save("/home/ucakdpg/Scratch/mogp-speedy/analysis/output_precip_6hour.npy", output_precip) 
+    np.save("", output_precip) 
     return
 
 if __name__ == '__main__':

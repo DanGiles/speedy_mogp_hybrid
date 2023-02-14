@@ -63,39 +63,35 @@ def data_prep(X, X_ps, oro, ls, y):
 
 
 def train_mogp(output_folder, n_train):
-    # output_folder = "../speedy_layers/temp_profile"    
-    #X = np.load('/home/ucakdpg/Scratch/mogp-speedy/processed/r1_100_t4/mean.npy')
-    #Y = np.load('/home/ucakdpg/Scratch/mogp-speedy/processed/r1_100_t4/std.npy')
+    output_folder = ""    
+    X = np.load('mean.npy')
+    Y = np.load('std.npy')
     #print(X.shape, Y.shape)
 
     print("Loaded in the X and Y")
-    #oro = np.load('/home/ucakdpg/Scratch/mogp-speedy/processed/r1_100_t4/orography.npy')
-    #land_sea = np.load('/home/ucakdpg/Scratch/mogp-speedy/processed/r1_100_t4/land_sea.npy')
+    oro = np.load('orography.npy')
+    land_sea = np.load('land_sea.npy')
 
-    # X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test = splitting_spatial_temporal(X, Y, oro, land_sea)
-    #X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test = hypercube(X, Y, oro, land_sea, n_train)
-    #print(X_train.shape)
-    #print("Cropping arrays")
-    #indices = crop_speedy(X_train)
-    #X_train_ps = X_train[0,0,:]
-    #X_test_ps = X_test[0,0,:]
+    X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test = hypercube(X, Y, oro, land_sea, n_train)
+    print("Cropping arrays")
+    indices = crop_speedy(X_train)
+    X_train_ps = X_train[0,0,:]
+    X_test_ps = X_test[0,0,:]
 
-    #X_train = X_train[1:,indices,:]
-    #X_test = X_test[1:,indices,:]
-    #y_train = y_train[1:,indices,:]
-    #y_test = y_test[1:,indices,:]
-
-    #print(X_train.shape, X_test.shape, y_train.shape, y_test.shape, oro_test.shape)  
+    X_train = X_train[1:,indices,:]
+    X_test = X_test[1:,indices,:]
+    y_train = y_train[1:,indices,:]
+    y_test = y_test[1:,indices,:]
 
     input_layers = 9
     variables = ['T', 'Q']
     # # Setting up the training dataset
-    #input, target = data_prep(X_train, X_train_ps, oro_train, ls_train, y_train)
-    input = np.load(os.path.join(output_folder, "input.npy"))
-    target = np.load(os.path.join(output_folder, "target.npy"))
+    input, target = data_prep(X_train, X_train_ps, oro_train, ls_train, y_train)
+    # input = np.load(os.path.join(output_folder, "input.npy"))
+    # target = np.load(os.path.join(output_folder, "target.npy"))
     print("input and target", input.shape, target.shape)
-    #np.save(os.path.join(output_folder, "input.npy"), input)
-    #np.save(os.path.join(output_folder, "target.npy"), target)
+    np.save(os.path.join(output_folder, "input.npy"), input)
+    np.save(os.path.join(output_folder, "target.npy"), target)
     # # Defining and fitting the MOGP
     #gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="SquaredExponential")
     gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
@@ -103,13 +99,13 @@ def train_mogp(output_folder, n_train):
     # # Save the trained mogp
     dill.dump(gp, open(os.path.join(output_folder, "gp.pkl"),"wb"))
     # # Setting up the testing dataset
-    #test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, y_test)
+    test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, y_test)
     #print("test and truth", test.shape, truth.shape)
     # Loading the trained mogp from file. Not needed but used to test implementation
-    test = np.load(os.path.join(output_folder, "test.npy"))
-    truth = np.load(os.path.join(output_folder, "truth.npy"))
-    #np.save(os.path.join(output_folder, "test.npy"), test)
-    #np.save(os.path.join(output_folder, "truth.npy"), truth)
+    # test = np.load(os.path.join(output_folder, "test.npy"))
+    # truth = np.load(os.path.join(output_folder, "truth.npy"))
+    np.save(os.path.join(output_folder, "test.npy"), test)
+    np.save(os.path.join(output_folder, "truth.npy"), truth)
     # Predict using the MOGP
     variances, uncer, d = gp.predict(test.T)
     print(test.dtype, variances.dtype, truth.dtype)
@@ -118,14 +114,16 @@ def train_mogp(output_folder, n_train):
         for i in range(99):
             figname = os.path.join(output_folder, "mogp_"+var+"_%i.png"%i)
             if count == 0 :
-                # print(truth[:8,i], variances[:8,i], uncer[:8,i])
                 single_profile(truth[:8,i], variances[:8,i], figname)
             else:
-                # print(truth[8:,i], variances[8:,i], uncer[8:,i])
                 single_profile(truth[8:,i], variances[8:,i], figname)
         count = count +1
 
     return gp, test
+
+def main():
+
+    return
 
 if __name__ == '__main__':
     main()
