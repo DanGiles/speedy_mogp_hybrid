@@ -45,7 +45,7 @@ def loop(
                     operation,
                     stash_code
                 )
-                data.reshape((UM_levels, subregion_resolution))
+                data = np.reshape(data, (UM_levels, subregion_resolution))
                 input_array[j, :, :, i, t] = data
 
 
@@ -88,8 +88,7 @@ def loop_2d(
                 operation,
                 stash_code
             )
-            # data.reshape((UM_levels, subregion_resolution))
-            input_array[k, :, i] = data.flatten()
+            input_array[k, :, i] = np.array(data).flatten()
 
 # def loop_2d(codes,  base_file, timestamps, oper, input_array):
 #     rootdir = ''
