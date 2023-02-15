@@ -45,7 +45,7 @@ def loop(
                     operation,
                     stash_code
                 )
-                data = np.reshape(data, (UM_levels, subregion_resolution))
+                data = np.reshape(data, (UM_levels, subregion_count))
                 input_array[j, :, :, i, t] = data
 
 
@@ -114,14 +114,14 @@ def main(day: int):
     time = ['000', '018', '036', '054']
     oper = 'AVG'
     input_array = np.zeros(
-        (3, UM_levels, subregion_resolution, region_count, len(time))
+        (3, UM_levels, subregion_count, region_count, len(time))
     )
     loop(day, stash, time, oper, input_array)
     np.save(f'202001{day:02d}_mean.npy', input_array)
 
     oper = 'STD'
     input_array = np.zeros(
-        (3, UM_levels, subregion_resolution, region_count, len(time))
+        (3, UM_levels, subregion_count, region_count, len(time))
     )
     loop(day, stash, time, oper, input_array)
     np.save(f'202001{day:02d}_std.npy', input_array)
@@ -130,7 +130,7 @@ def main(day: int):
     twodstash = ['00033']
     oper = ['AVG', 'STD']
     input_array = np.zeros(
-        (2, subregion_resolution, region_count)
+        (2, subregion_count, region_count)
     )
     loop_2d(day, twodstash, time, oper, input_array)
     np.save(f'202001{day:02d}_orography.npy', input_array)
@@ -138,7 +138,7 @@ def main(day: int):
     twodstash = ['00030']
     oper = ['AVG', 'STD']
     input_array = np.zeros(
-        (2, subregion_resolution, region_count)
+        (2, subregion_count, region_count)
     )
     loop_2d(day, twodstash, time, oper, input_array)
     np.save(f'202001{day:02d}_land_sea.npy', input_array)
