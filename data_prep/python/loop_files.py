@@ -111,7 +111,7 @@ def loop_2d(
 def main(day: int):
     
     stash = ['00408', '16004','00010']
-    time = ['000', '018', '036', '054']
+    time = ['000', '006', '012', '018']
     oper = 'AVG'
     input_array = np.zeros(
         (3, UM_levels, subregion_count, region_count, len(time))
