@@ -45,7 +45,7 @@ def loop(
                     operation,
                     stash_code
                 )
-                data = np.reshape(data, (UM_levels, subregion_count))
+                data = np.reshape(data, (UM_levels, subregion_resolution))
                 input_array[j, :, :, i, t] = data
 
 
