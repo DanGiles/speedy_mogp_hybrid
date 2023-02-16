@@ -119,9 +119,11 @@ def main(day: int):
     loop(day, stash, time, oper, input_array)
     np.save(f'202001{day:02d}_mean.npy', input_array)
 
+    ### THESE DIMENSIONS NEED CHANGING
+    stash = ['16004','00010']
     oper = 'STD'
     input_array = np.zeros(
-        (3, UM_levels, subregion_count, region_count, len(time))
+        (2, UM_levels, subregion_count, region_count, len(time))
     )
     loop(day, stash, time, oper, input_array)
     np.save(f'202001{day:02d}_std.npy', input_array)
@@ -135,12 +137,14 @@ def main(day: int):
     loop_2d(day, twodstash, time, oper, input_array)
     np.save(f'202001{day:02d}_orography.npy', input_array)
 
+    ### THESE DIMENSIONS NEED CHANGING
     twodstash = ['00030']
-    oper = ['AVG', 'STD']
+    oper = ['AVG']
     input_array = np.zeros(
-        (2, subregion_count, region_count)
+        (1, subregion_count, region_count)
     )
     loop_2d(day, twodstash, time, oper, input_array)
+    input_array.squeeze(axis=0) #this line removes the first dimension.
     np.save(f'202001{day:02d}_land_sea.npy', input_array)
 
     # file.close() #I don't this this line does anything?
