@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import numpy as np
-# import matplotlib.pyplot as plt
-from netCDF4 import Dataset
-# import os
 import sys
-
 from typing import List
 
-#script below contains information regarding the project set.
-#Edit script_variables.py before running loop_files.py
+import numpy as np
+from netCDF4 import Dataset
+
+#Script below contains information regarding the project dataset and directories.
+#Edit script_variables.py before running loop_files.py - See README.md
 from script_variables import *
 
 
@@ -49,25 +47,6 @@ def loop(
                 input_array[j, :, :, i, t] = data
 
 
-# def loop(codes, base_file, timestamps, oper, input_array):
-#     rootdir = ''
-#     lead = '20200101T0000Z_'
-#     after = '_km3p3_RA2M_32x32sampling_hence_14x14_time'
-#     site = 0
-#     for i in range(len(base_file)):
-#         region = base_file[i].split()
-#         j = 0
-#         for stash in codes:
-#             file_name = rootdir + region[0] + '/' + lead + region[0] + after
-#             tim = 0
-#             for t in timestamps:
-#                 data = read_data(file_name, t, oper, stash)
-#                 data = np.reshape(data, (70,196))
-#                 input_array[j,:,:,site,tim] = data
-#                 tim = tim + 1
-#             j = j + 1
-#         site = site + 1
-#     return
 
 def loop_2d(
     day: int, 
@@ -90,22 +69,6 @@ def loop_2d(
             )
             input_array[k, :, i] = np.array(data).flatten()
 
-# def loop_2d(codes,  base_file, timestamps, oper, input_array):
-#     rootdir = ''
-#     lead = '20200101T0000Z_'
-#     after = '_km3p3_RA2M_32x32sampling_hence_14x14_time'
-#     site = 0 
-#     for i in range(len(base_file)):
-#         region = base_file[i].split()
-#         j = 0
-#         for o in oper:
-#             file_name = rootdir + region[0] + '/' + lead + region[0] + after
-#             data = read_data(file_name, timestamps[0], o, codes[0])
-#             data = np.array(data)
-#             input_array[j,:,site] = data.flatten()
-#             j = j + 1
-#         site = site + 1
-#     return
 
 
 def main(day: int):
@@ -119,7 +82,6 @@ def main(day: int):
     loop(day, stash, time, oper, input_array)
     np.save(f'{output_root}/202001{day:02d}_mean.npy', input_array)
 
-    ### THESE DIMENSIONS NEED CHANGING
     stash = ['16004','00010']
     oper = 'STD'
     input_array = np.zeros(
@@ -137,7 +99,6 @@ def main(day: int):
     loop_2d(day, twodstash[0], time[0], oper, input_array)
     np.save(f'{output_root}/202001{day:02d}_orography.npy', input_array)
 
-    ### THESE DIMENSIONS NEED CHANGING
     twodstash = ['00030']
     oper = ['AVG']
     input_array = np.zeros(
