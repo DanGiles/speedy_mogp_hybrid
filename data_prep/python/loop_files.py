@@ -134,7 +134,7 @@ def main(day: int):
     input_array = np.zeros(
         (2, subregion_count, region_count)
     )
-    loop_2d(day, twodstash, time, oper, input_array)
+    loop_2d(day, twodstash[0], time[0], oper, input_array)
     np.save(f'202001{day:02d}_orography.npy', input_array)
 
     ### THESE DIMENSIONS NEED CHANGING
@@ -143,7 +143,7 @@ def main(day: int):
     input_array = np.zeros(
         (1, subregion_count, region_count)
     )
-    loop_2d(day, twodstash, time, oper, input_array)
+    loop_2d(day, twodstash[0], time[0], oper, input_array)
     input_array.squeeze(axis=0) #this line removes the first dimension.
     np.save(f'202001{day:02d}_land_sea.npy', input_array)
 
