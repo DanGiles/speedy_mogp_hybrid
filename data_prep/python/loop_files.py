@@ -103,7 +103,9 @@ def main(day: int):
         (1, subregion_count, region_count)
     )
     loop_2d(day, twodstash[0], time[0], oper, input_array)
+    print(input_array.shape)
     input_array.squeeze(axis=0) #this line removes the first dimension.
+    print(input_array.shape)
     np.save(f'{output_root}/202001{day:02d}_land_sea.npy', input_array)
 
 
