@@ -15,3 +15,4 @@ python loop_files.py <day>
 ```
 
 where `<day>` is an integer. In this case, day takes values 1, 2, ..., 10.
+`run_loop_files.sh` is already setup for run this.
