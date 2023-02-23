@@ -26,13 +26,12 @@ def read_data(
 def loop(
     day: int, 
     stash_codes: List[str], 
-    # base_file, 
     timestamps: List[str], 
     operation: str, 
     input_array: np.ndarray
 ) -> None:
     date = f'202001{day:02d}'
-    for i in range(subregion_count):
+    for i in range(region_count):
         subregion = i+1
         for j, stash_code in enumerate(stash_codes):
             filename = f"{input_root}/{date}/{date}T0000Z_r{subregion:02d}_km1p5_RA2T_224x224sampling_hence_2x2_time"
@@ -51,13 +50,12 @@ def loop(
 def loop_2d(
     day: int, 
     stash_code: str, 
-    # base_file, 
     timestamp: str, 
     operations: List[str], 
     input_array: np.ndarray
 ) -> None:
     date = f'202001{day:02d}'
-    for i in range(subregion_count):
+    for i in range(region_count):
         subregion = i+1
         for k, operation in enumerate(operations):
             filename = f"{input_root}/{date}/{date}T0000Z_r{subregion:02d}_km1p5_RA2T_224x224sampling_hence_2x2_time"
@@ -108,20 +106,8 @@ def main(day: int):
     input_array.squeeze(axis=0) #this line removes the first dimension.
     np.save(f'{output_root}/202001{day:02d}_land_sea.npy', input_array)
 
-    # file.close() #I don't this this line does anything?
 
 
 if __name__ == "__main__":
     day = int(sys.argv[1])
     main(day)
-
-#np.zeros((3,70,(196*len(base_file))))
-#loop(stash, base_file, time, oper, input_array)
-#np.save('../processed/std.npy', input_array)
-
-# Two Dimensional Data
-# twodstash = ['00033']#, '00033']
-# oper = ['AVG', 'STD']
-# input_array = np.zeros((2,(196*len(base_file))))
-# loop_2d(twodstash, base_file, time, oper, input_array)
-# np.save('../processed/orography.npy', input_array)
