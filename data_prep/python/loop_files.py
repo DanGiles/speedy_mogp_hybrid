@@ -73,29 +73,29 @@ def main(day: int):
     
     stash = ['00408', '16004','00010']
     time = ['000', '006', '012', '018']
-    # oper = 'AVG'
-    # input_array = np.zeros(
-    #     (3, UM_levels, subregion_count, region_count, len(time))
-    # )
-    # loop(day, stash, time, oper, input_array)
-    # np.save(f'{output_root}/202001{day:02d}_mean.npy', input_array)
+    oper = 'AVG'
+    input_array = np.zeros(
+        (3, UM_levels, subregion_count, region_count, len(time))
+    )
+    loop(day, stash, time, oper, input_array)
+    np.save(f'{output_root}/202001{day:02d}_mean.npy', input_array)
 
-    # stash = ['16004','00010']
-    # oper = 'STD'
-    # input_array = np.zeros(
-    #     (2, UM_levels, subregion_count, region_count, len(time))
-    # )
-    # loop(day, stash, time, oper, input_array)
-    # np.save(f'{output_root}/202001{day:02d}_std.npy', input_array)
+    stash = ['16004','00010']
+    oper = 'STD'
+    input_array = np.zeros(
+        (2, UM_levels, subregion_count, region_count, len(time))
+    )
+    loop(day, stash, time, oper, input_array)
+    np.save(f'{output_root}/202001{day:02d}_std.npy', input_array)
     
 
-    # twodstash = ['00033']
-    # oper = ['AVG', 'STD']
-    # input_array = np.zeros(
-    #     (2, subregion_count, region_count)
-    # )
-    # loop_2d(day, twodstash[0], time[0], oper, input_array)
-    # np.save(f'{output_root}/202001{day:02d}_orography.npy', input_array)
+    twodstash = ['00033']
+    oper = ['AVG', 'STD']
+    input_array = np.zeros(
+        (2, subregion_count, region_count)
+    )
+    loop_2d(day, twodstash[0], time[0], oper, input_array)
+    np.save(f'{output_root}/202001{day:02d}_orography.npy', input_array)
 
     twodstash = ['00030']
     oper = ['AVG']
@@ -103,9 +103,7 @@ def main(day: int):
         (1, subregion_count, region_count)
     )
     loop_2d(day, twodstash[0], time[0], oper, input_array)
-    print(input_array.shape)
     input_array = np.squeeze(input_array, axis=0) #this line removes the first dimension.
-    print(input_array.shape)
     np.save(f'{output_root}/202001{day:02d}_land_sea.npy', input_array)
 
 
