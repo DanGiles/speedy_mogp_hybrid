@@ -15,16 +15,20 @@
 #$ -N speedy
 
 # Request 32 cores.
-#$ -pe smp 36
+#$ -pe smp 2
 
 # Set the working directory to somewhere in your scratch space.  
 #  This is a necessary step as compute nodes cannot write to $HOME.
 # Replace "<your_UCL_id>" with your UCL user ID.
-#$ -wd /home/ucakdpg/Scratch/mogp-speedy
+#$ -wd /home/ucakjcb/Scratch/clouds
 
 # Your work should be done in $TMPDIR 
-cd /home/ucakdpg/Scratch/mogp-speedy
-module load python3
-source /home/ucakdpg/Scratch/mogp-speedy/mogp/bin/activate
+cd /home/ucakjcb/ml_climate_fusion/speedy_fusion/src/
+
+module load python3/recommended
+
+source /home/ucakjcb/venvs/mogp061/bin/activate
+# source /home/ucakdpg/Scratch/mogp-speedy/mogp/bin/activate
+
 # Run the application and put the output into a file called date.txt
-python /home/ucakdpg/Scratch/mogp-speedy/wrapper.py
+python /home/ucakjcb/ml_climate_fusion/speedy_fusion/src/mogp.py

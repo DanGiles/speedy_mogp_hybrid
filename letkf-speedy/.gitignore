@@ -1,0 +1,8 @@
+*.swp
+DATA
+experiments
+model/data/bc/t39
+model_rp/data/bc/t39
+letkf/letkf
+letkf/obsope
+obs/obsmake
