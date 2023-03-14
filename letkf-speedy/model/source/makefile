@@ -104,8 +104,8 @@ FILES= \
 .f.o:
 	$(COMPILE) $(COMCONV) $(COMOTT1) -c $<
 
-imp.exe: $(FILES)  at_gcm.o
-	$(COMPILE) $(COMCONV) $(COMOTT1) $(FILES) at_gcm.o -o imp.exe $(COMLIB1)
+imp: $(FILES)  at_gcm.o
+	$(COMPILE) $(COMCONV) $(COMOTT1) $(FILES) at_gcm.o -o imp $(COMLIB1)
 
 .PHONY: clean
 clean:

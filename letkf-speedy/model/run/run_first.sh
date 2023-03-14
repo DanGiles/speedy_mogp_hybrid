@@ -59,10 +59,11 @@ sed -i "s/IHOUT/.true./g" mod_tsteps.f90
 sed -i "s/IPOUT/.false./g" mod_tsteps.f90
 sed -i "s/SIXHRRUN/.false./g" mod_tsteps.f90
 
-make -s imp.exe
+make -s imp
 
 sh inpfiles.s $nat_res
 
+cp imp $NATURE
 echo "Begin spin-up from $IYYYY/$IMM/$IDD/$IHH"
 FORT2=0
 echo $FORT2 > fort.2
@@ -70,7 +71,7 @@ echo $SYYYY >> fort.2
 echo $SMM >> fort.2
 echo $SDD >> fort.2
 echo $SHH >> fort.2
-time ./imp.exe | tee out.lis
+time ./imp | tee out.lis
 
 mv $IYYYY$IMM$IDD$IHH.grd $NATURE
  

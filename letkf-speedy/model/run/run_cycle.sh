@@ -47,7 +47,7 @@ sed -i "s/SIXHRRUN/.true./g" mod_tsteps.f90
 sed -i "s/IHOUT/.true./g" mod_tsteps.f90
 sed -i "s/IPOUT/.true./g" mod_tsteps.f90
 
-make -s imp.exe
+make -s imp
 
 sh inpfiles.s $nat_res
 
@@ -56,6 +56,13 @@ YYYY=$IYYYY
 MM=$IMM
 DD=$IDD
 HH=$IHH
+
+# Extension for fluxes files
+fluxes="_fluxes"
+
+# Copy the executable
+cp imp $NATURE
+
 while test $YYYY$MM$DD$HH -le $FYYYY$FMM$FDD$FHH
 do
     # Run 6-hour forecast
@@ -67,7 +74,7 @@ do
     echo $MM >> fort.2
     echo $DD >> fort.2
     echo $HH >> fort.2
-    ./imp.exe &> out.lis
+    ./imp &> out.lis
 
     # Date change
     TY=`timeinc6hr $YYYY $MM $DD $HH | cut -c1-4`
@@ -81,6 +88,7 @@ do
 
     # Move output file
     mv $YYYY$MM$DD$HH.grd $NATURE
+    mv $YYYY$MM$DD$HH$fluxes.grd $NATURE
 done
 
 echo "Cleaning up"

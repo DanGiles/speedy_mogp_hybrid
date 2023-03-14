@@ -9,11 +9,12 @@ subroutine iogrid(imode)
     !                  = 3 : write a GrADS control file (for p)
     !                  = 4 : write model variables  to a gridded file (sigma)
     !                  = 5 : write a GrADS control file (for sigma)
-    !  Initialized common blocks (if IMODE = 1) : DYNSP1, SFCANOM 
+    !  Initialized common blocks (if IMODE = 1) : DYNSP1, SFCANOM
     !
 
     use mod_atparam, only: ix, iy, nx, mx, il, kx
     use mod_physcon, only: p0, gg, rd, sig, sigl, pout
+    use mod_physvar
     use mod_dynvar
     use mod_dyncon1
     use mod_date
@@ -47,6 +48,7 @@ subroutine iogrid(imode)
     character(len=14) :: ctlname='yyyymmddhh.ctl'
     character(len=16) :: filenamep='yyyymmddhh_p.grd'
     character(len=16) :: ctlnamep='yyyymmddhh_p.ctl'
+    character(len=21) :: fluxesname='yyyymmddhh_fluxes.grd'
     character(len=3) :: cmon3='JAN'
     integer :: irec
     integer :: iitest=0
@@ -89,7 +91,8 @@ subroutine iogrid(imode)
         if(iitest==1) print *,' TGR  :',minval(tgr),maxval(tgr)
         if(iitest==1) print *,' QGR  :',minval(qgr),maxval(qgr)
         if(iitest==1) print *,' PSGR :',minval(psgr),maxval(psgr)
-
+        ! Add a print statement for the first set of velocity values
+        ! print *, ' PSGR  :',minval(psgr),maxval(psgr)
         ! Conversion from gridded variable to spectral variable
         do k=1,kx
             call vdspec(ugr(1,k),vgr(1,k),vor(1,1,k,1),div(1,1,k,1),2)
@@ -335,6 +338,20 @@ subroutine iogrid(imode)
         write (11,'(A)') 'RAIN 0 99 Precipitation [mm/6hr]'
         write (11,'(A)') 'ENDVARS'
         close (11)
+    else if (imode.eq.6) then
+        write (fluxesname(1:4),'(i4.4)') iyear
+        write (fluxesname(5:6),'(i2.2)') imonth
+        write (fluxesname(7:8),'(i2.2)') iday
+        write (fluxesname(9:10),'(i2.2)') ihour
+        open(101,file=fluxesname,form='unformatted',access='direct',recl=8*ix*il)
+        write (101,rec=1) (olr(j),j=1,ngp)
+        write (101,rec=2) (precls(j),j=1,ngp)
+        write (101,rec=3) (precnv(j),j=1,ngp)
+        write (101,rec=4) (cloudc(j),j=1,ngp)
+        close (101)
+        print *,'Outputting the OLR, PRECLS, PRECNV and Cloud Fraction'
+        print *,' OLR :',minval(olr),maxval(olr)
+        print *,' CLOUDC :',minval(cloudc),maxval(cloudc)
     else
         print *,'Hey, look at the usage! (IOGRID)'
         stop
