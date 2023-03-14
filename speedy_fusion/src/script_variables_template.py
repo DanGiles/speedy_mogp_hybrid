@@ -3,8 +3,9 @@
 #COPY & RENAME THIS FILE TO script_variables.py AND EDIT FOR YOUR SETUP
 
 #Different for each user
-input_root = '' #This points to where your .npy files are
-output_root = '' #This points to where your output .pkl files will go
+processed_data_root = '' #This points to where your .npy files are
+pngs_root = '' #This is where the pngs will be saved to
+gp_directory = '' #This points to where your gp.pkl files will go
 
 #Different for each dataset
 UM_levels = 70

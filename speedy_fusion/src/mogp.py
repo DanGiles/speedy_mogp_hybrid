@@ -87,14 +87,14 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
     return train, target
 
 
-def train_mogp(output_folder, n_train):
-    X = np.load(f'{input_root}20200101_mean.npy')
-    Y = np.load(f'{input_root}20200101_std.npy')
+def train_mogp(n_train):
+    X = np.load(f'{processed_data_root}20200101_mean.npy')
+    Y = np.load(f'{processed_data_root}20200101_std.npy')
     # print(X.shape, Y.shape)
 
     print("Loaded in the X and Y")
-    oro = np.load(f'{input_root}20200101_orography.npy')
-    land_sea = np.load(f'{input_root}20200101_land_sea.npy')
+    oro = np.load(f'{processed_data_root}20200101_orography.npy')
+    land_sea = np.load(f'{processed_data_root}20200101_land_sea.npy')
 
     #X_train.shape:     (3, UM_levels, n_train)
     #X_test.shape:      (3, UM_levels, n_test)
@@ -142,10 +142,10 @@ def train_mogp(output_folder, n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        pickle.dump(gp, open(os.path.join(f"{output_folder}data/GP-dumps/", "gp.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(f"{gp_directory}", "gp.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
-        gp = pickle.load(open(os.path.join(f"{output_folder}data/GP-dumps/", "gp.pkl"), "rb"))
+        gp = pickle.load(open(os.path.join(f"{gp_directory}", "gp.pkl"), "rb"))
 
 
 
@@ -168,7 +168,7 @@ def train_mogp(output_folder, n_train):
     variables = ['T', 'Q']
     for count, variable in enumerate(variables):
         for region in range(region_count):
-            figname = f"{output_folder}pngs/mogp_{variable}_{region:02d}.png"
+            figname = f"{pngs_root}mogp_{variable}_{region:02d}.png"
             if count == 0:
                 single_profile(truth[:8, region], variances[:8, region], figname)
             else:
@@ -176,4 +176,4 @@ def train_mogp(output_folder, n_train):
 
 
 if __name__ == '__main__':
-    train_mogp(output_root, 500)
+    train_mogp(500)
