@@ -74,7 +74,8 @@ def read_const_grd(filename, nlon, nlat, var):
 
 def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
     # Path to the bash script which carries out the forecast
-    forecast = os.path.join("/home/ucakdpg/Scratch/mogp-speedy", "dafcst.sh")
+    # forecast = os.path.join("/home/ucakdpg/Scratch/mogp-speedy", "dafcst.sh")
+    forecast = "dafcst.sh"
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
     # Process=Popen([str(forecast), str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)])
