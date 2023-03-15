@@ -15,7 +15,7 @@
 #$ -N speedy
 
 # Request 32 cores.
-#$ -pe smp 2
+#$ -pe smp 36
 
 # Set the working directory to somewhere in your scratch space.  
 #  This is a necessary step as compute nodes cannot write to $HOME.
