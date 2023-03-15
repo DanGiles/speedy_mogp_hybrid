@@ -4,13 +4,14 @@ import os
 import numpy as np
 import subprocess
 from datetime import datetime, date, timedelta
-import shutil
-import mogp_emulator
-import dill
-import itertools
-#import mogp_emulator
+import shutil # for removing data from previous simulations
+# import mogp_emulator
+# import dill
+import pickle
+# import itertools
 
 from mogp import *
+from script_variables import *
 
 def check_total_water(Q, Qs, rho):
     num = 0
@@ -168,21 +169,24 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
 
 
 def main():
-    # Train the GP Model
-    plot_folder = os.path.join("", "")
-    n_train = 500
-    print("Starting Training")
-    trained_gp, test_UM = train_mogp(plot_folder, n_train)
-    #trained_gp = dill.load(open(os.path.join(plot_folder, "gp_2nd.pkl"), "rb"))
+    TRAIN_GP = False
+    if TRAIN_GP:
+        # Train the GP Model
+        plot_folder = os.path.join("", "")
+        n_train = 500
+        print("Starting Training")
+        trained_gp, test_UM = train_mogp(plot_folder, n_train)
+    else:
+        trained_gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
 
+
+
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
-    SPEEDY = ""
-    nature_dir = os.path.join(SPEEDY, "DATA", "nature")
-    output_folder = ""
-    data_folder = os.path.join(output_folder, "DATA")
+    nature_dir = os.path.join(SPEEDY_root, "DATA", "nature")
+    data_folder = os.path.join(SPEEDY_data_read_root, "DATA")
 
     IDate = "1982010100"
     dtDate = "1982010106"
@@ -193,14 +197,14 @@ def main():
     dt = 6
     
     # Initialisation steps
-    create_folders(output_folder)
+    create_folders(SPEEDY_data_read_root)
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
     # Read in the orography and land/sea fraction
-    oro = read_const_grd(os.path.join(SPEEDY,"model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
-    lsm = read_const_grd(os.path.join(SPEEDY,"model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
+    oro = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
+    lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
-    rho = np.loadtxt("constants/density.txt")
+    rho = np.loadtxt("density.txt")
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
     # Main time loop
@@ -223,13 +227,13 @@ def main():
         write_fortran(file, data)
         print("Done Writing")
         # # # Speedy integration forward
-        speedy_update(SPEEDY, output_folder, IDate, dtDate)
+        speedy_update(SPEEDY_root, SPEEDY_data_read_root, IDate, dtDate)
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))
         data = read_grd(file, nlon, nlat, nlev)
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    np.save("", output_precip) 
+    # np.save("", output_precip) 
     return
 
 if __name__ == '__main__':
