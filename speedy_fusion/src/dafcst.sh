@@ -13,7 +13,9 @@ TYMDH=$4
 TMPDIR=${OUTPUT}/tmp
 cd ${TMPDIR} 
 # Create directory for this process
-cp /home/ucakdpg/Scratch/mogp-speedy/imp .
+#cp /home/ucakdpg/Scratch/mogp-speedy/imp .
+cp $SPEEDY/DATA/nature/imp .
+
 # Set up boundary files
 SB=$SPEEDY/model/data/bc/t30/clim
 SC=$SPEEDY/model/data/bc/t30/anom

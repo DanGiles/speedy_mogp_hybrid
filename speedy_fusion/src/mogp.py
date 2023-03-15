@@ -142,10 +142,10 @@ def train_mogp(n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        pickle.dump(gp, open(os.path.join(f"{gp_directory}", "gp.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(f"{gp_directory_root}", "gp.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
-        gp = pickle.load(open(os.path.join(f"{gp_directory}", "gp.pkl"), "rb"))
+        gp = pickle.load(open(os.path.join(f"{gp_directory_root}", "gp.pkl"), "rb"))
 
 
 
