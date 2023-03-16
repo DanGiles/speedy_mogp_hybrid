@@ -5,7 +5,7 @@ import numpy as np
 import subprocess
 from datetime import datetime, date, timedelta
 import shutil # for removing data from previous simulations
-# import mogp_emulator
+import mogp_emulator
 # import dill
 import pickle
 # import itertools
