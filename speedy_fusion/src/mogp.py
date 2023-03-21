@@ -28,6 +28,7 @@ def hypercube(
     n_test = 100 # test sample size
 
     # test design over region, subregion and time
+    # CHECK THE 
     ed = mogp_emulator.LatinHypercubeDesign([
         (0, region_count), 
         (0, subregion_count), 
@@ -80,6 +81,8 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
     train[2, :] = ls    #land-sea ratio
     train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
     train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
+
+    print(X_ps[0], train[0, 0]) # these should be identical, check float32 float64 conversion
 
     target[:8, :] = y[0, :] #STD air temp at desired levels
     target[8:, :] = y[1, :] #STD humudity at desired levels
