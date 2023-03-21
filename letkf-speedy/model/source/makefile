@@ -13,7 +13,7 @@ COMPILE=gfortran
 ### COMOTT1=  -fast  
 
 # COMCONV= -byteswapio 
- COMCONV= -fconvert=swap
+#  COMCONV= -fconvert=swap
 
 FILES= \
        cpl_bcinterp.o \
