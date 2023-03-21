@@ -135,7 +135,6 @@ def train_mogp(n_train):
 
 
     # This switch is primarily used for my testing
-    TRAIN_GP = False
     if TRAIN_GP is True:
         # # Defining and fitting the MOGP
         #gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="SquaredExponential")

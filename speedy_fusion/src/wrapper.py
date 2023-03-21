@@ -74,11 +74,9 @@ def read_const_grd(filename, nlon, nlat, var):
 
 def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
     # Path to the bash script which carries out the forecast
-    # forecast = os.path.join("/home/ucakdpg/Scratch/mogp-speedy", "dafcst.sh")
-    forecast = "dafcst.sh"
+    forecast = os.path.join(output_folder, "src", "dafcst.sh")
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
-    # Process=Popen([str(forecast), str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)])
     return
 
 def write_fortran(filename, data):
@@ -234,7 +232,7 @@ def main():
         data = read_grd(file, nlon, nlat, nlev)
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    # np.save("", output_precip) 
+    np.save(os.join.path(SPEEDY_data_read_root, "precipitation.npy"), output_precip) 
     return
 
 if __name__ == '__main__':

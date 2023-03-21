@@ -16,3 +16,6 @@ region_count = 80 #was 99 (but actually about 94)
 region_resolution = 448 #was 196?
 subregion_count = 4
 subregion_resolution = 224
+
+# Flags
+TRAIN_GP = True
