@@ -28,7 +28,6 @@ def hypercube(
     n_test = 100 # test sample size
 
     # test design over region, subregion and time
-    # CHECK THE 
     ed = mogp_emulator.LatinHypercubeDesign([
         (0, region_count), 
         (0, subregion_count), 
@@ -82,8 +81,6 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
     train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
     train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
 
-    print(X_ps[0], train[0, 0]) # these should be identical, check float32 float64 conversion
-
     target[:8, :] = y[0, :] #STD air temp at desired levels
     target[8:, :] = y[1, :] #STD humudity at desired levels
 
@@ -91,13 +88,13 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def train_mogp(n_train):
-    X = np.load(f'{processed_data_root}20200101_mean.npy')
-    Y = np.load(f'{processed_data_root}20200101_std.npy')
+    X = np.load(os.path.join(processed_data_root, "20200101_mean.npy"))
+    Y = np.load(os.path.join(processed_data_root, "20200101_std.npy"))
     # print(X.shape, Y.shape)
 
     print("Loaded in the X and Y")
-    oro = np.load(f'{processed_data_root}20200101_orography.npy')
-    land_sea = np.load(f'{processed_data_root}20200101_land_sea.npy')
+    oro = np.load(os.path.join(processed_data_root, "20200101_orography.npy"))
+    land_sea = np.load(os.path.join(processed_data_root, "20200101_land_sea.npy"))
 
     #X_train.shape:     (3, UM_levels, n_train)
     #X_test.shape:      (3, UM_levels, n_test)
@@ -138,17 +135,16 @@ def train_mogp(n_train):
 
 
     # This switch is primarily used for my testing
-    TRAIN_GP = False
     if TRAIN_GP is True:
         # # Defining and fitting the MOGP
         #gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="SquaredExponential")
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        pickle.dump(gp, open(os.path.join(f"{gp_directory_root}", "gp.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(gp_directory_root, "gp.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
-        gp = pickle.load(open(os.path.join(f"{gp_directory_root}", "gp.pkl"), "rb"))
+        gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
 
 
 
@@ -171,7 +167,7 @@ def train_mogp(n_train):
     variables = ['T', 'Q']
     for count, variable in enumerate(variables):
         for region in range(region_count):
-            figname = f"{pngs_root}mogp_{variable}_{region:02d}.png"
+            figname = os.path.join(pngs_root, f"mogp_{variable}_{region:02d}.png")
             if count == 0:
                 single_profile(truth[:8, region], variances[:8, region], figname)
             else:

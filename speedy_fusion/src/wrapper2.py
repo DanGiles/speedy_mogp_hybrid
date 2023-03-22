@@ -6,7 +6,10 @@ import subprocess
 from datetime import datetime, date, timedelta
 import shutil # for removing data from previous simulations
 import mogp_emulator
+# import dill
 import pickle
+# import itertools
+from typing import Tuple
 
 from mogp import *
 from script_variables import *
@@ -41,17 +44,17 @@ def check_static_energy(Q, Qs, T, Ts):
     return Ts
     
 
-def create_folders(output_folder):
-    tmp = os.path.join(output_folder, "tmp")
+def create_folders(output_folder) -> None:
+    data = os.path.join(output_folder, "DATA")
+    tmp = os.path.join(data, "tmp")
 
-    #do not empty directory if it doesn't exist!
-    if os.path.isdir(tmp):
-        shutil.rmtree(output_folder)
-    os.mkdir(output_folder)
+    shutil.rmtree(data)
+    os.mkdir(data)
     os.mkdir(tmp)
 
+    return
 
-def read_grd(filename, nlon, nlat, nlev):
+def read_grd(filename, nlon, nlat, nlev) -> np.ndarray:
     nv3d = 4
     nv2d = 2
     f = np.fromfile(filename, dtype=np.float32)
@@ -60,7 +63,7 @@ def read_grd(filename, nlon, nlat, nlev):
     data = data.astype(np.float64)
     return data
 
-def read_const_grd(filename, nlon, nlat, var):
+def read_const_grd(filename, nlon, nlat, var) -> np.ndarray:
     # Orography = 0
     # Land/Sea Mask = 1
     num = 5
@@ -70,14 +73,16 @@ def read_const_grd(filename, nlon, nlat, var):
     data = data.astype(np.float64)
     return data[:,:,var]
 
-def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
+def speedy_update(SPEEDY, output_folder, YMDH, TYMDH) -> None:
     # Path to the bash script which carries out the forecast
-    forecast = os.path.join(SPEEDY_fusion_root, "src", "dafcst.sh")
+    # forecast = os.path.join("/home/ucakdpg/Scratch/mogp-speedy", "dafcst.sh")
+    forecast = "dafcst.sh"
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
+    # Process=Popen([str(forecast), str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)])
     return
 
-def write_fortran(filename, data):
+def write_fortran(filename, data) -> None:
     f=open(filename,'wb+')
     # data = data.flatten()
     data = data.astype(np.float32)
@@ -95,7 +100,7 @@ def step_datetime(idate, dtdate, SPEEDY_DATE_FORMAT, dt):
 
 
 
-def data_prep(data, oro, ls, nlon, nlat):
+def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     train = np.empty(((nlon*nlat),19), dtype = np.float64)
 
     T_mean = data[:,:,16:24]
@@ -114,7 +119,7 @@ def data_prep(data, oro, ls, nlon, nlat):
     return train
 
 
-def mogp_prediction(test, gp, nlon, nlat, nlev):
+def mogp_prediction(test, gp, nlon, nlat, nlev) -> Tuple[np.ndarray, np.ndarray]:
 
     variance, uncer, d = gp.predict(test)
     T_mean = test[:, 3:11]
@@ -135,7 +140,7 @@ def mogp_prediction(test, gp, nlon, nlat, nlev):
 
     return resampled_T, resampled_Q
 
-def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
+def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho) -> Tuple[np.ndarray, np.ndarray]:
     
     variance, uncer, d = trained_gp.predict(test)
     print("Prediction")
@@ -174,17 +179,14 @@ def main():
         print("Starting Training")
         trained_gp, test_UM = train_mogp(plot_folder, n_train)
     else:
-        # Read in pre-trained GP model
         trained_gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
 
-
-
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
-    nature_dir = os.path.join(SPEEDY_nature_root, "DATA", "nature")
-    data_folder = os.path.realpath(SPEEDY_data_read_root)
+    nature_dir = os.path.join(SPEEDY_root, "DATA", "nature")
+    data_folder = os.path.join(SPEEDY_data_read_root, "DATA")
 
     IDate = "1982010100"
     dtDate = "1982010106"
@@ -196,42 +198,56 @@ def main():
     
     # Initialisation steps
     create_folders(SPEEDY_data_read_root)
+
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
+
     # Read in the orography and land/sea fraction
-    oro = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
-    lsm = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
+    oro = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
+    lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt("density.txt")
+
     # Output Array
-    output_precip = np.zeros((nlon, nlat, number_time_steps))
+    # output_precip = np.zeros((nlon, nlat, number_time_steps))
+
     # Main time loop
-    for t in range(0,number_time_steps):
+    for t in range(0, number_time_steps):
         # Time counters
         print(IDate, dtDate, t)
         # Time to do the MOGP magic
         # Loop through all columns
-        test = data_prep(data, oro, lsm, nlon, nlat)
         print("Data Prep")
-        resampled_T, resampled_Q = mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho)
-        print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
-        print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
-        data[:,:,16:24] = resampled_T[:,:,:]
-        data[:,:,24:32] = resampled_Q[:,:,:]
-        output_precip[:,:,t] = data[:,:,33]
+        test = data_prep(data, oro, lsm, nlon, nlat)
+        print(test.shape)
+
+        # resampled_T, resampled_Q = mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho)
+        resampled_T, resampled_Q = mogp_prediction(test, trained_gp, nlon, nlat, nlev)
+
+        print("Max T Difference %f"%(np.amax(data[:, :, 16:24] - resampled_T[:,:,:])))
+        print("Max Q Difference %f"%(np.amax(data[:, :, 24:32] - resampled_Q[:,:,:])))
+
+        data[:, :, 16:24] = resampled_T[:,:,:]
+        data[:, :, 24:32] = resampled_Q[:,:,:]
+        # output_precip[:,:,t] = data[:,:,33]
+
         # # Write updated data to fortran speedy file
         file = os.path.join(data_folder, (IDate+".grd"))
         print("Writing file")
         write_fortran(file, data)
         print("Done Writing")
+
         # # # Speedy integration forward
-        speedy_update(SPEEDY_nature_root, os.path.realpath(SPEEDY_data_read_root), IDate, dtDate)
+        speedy_update(SPEEDY_root, SPEEDY_data_read_root, IDate, dtDate)
+
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))
         data = read_grd(file, nlon, nlat, nlev)
+
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    np.save(os.join.path(SPEEDY_data_read_root, "precipitation.npy"), output_precip) 
+
+    # np.save("", output_precip) 
     return
 
 if __name__ == '__main__':
