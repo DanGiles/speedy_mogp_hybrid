@@ -6,9 +6,7 @@ import subprocess
 from datetime import datetime, date, timedelta
 import shutil # for removing data from previous simulations
 import mogp_emulator
-# import dill
 import pickle
-# import itertools
 
 from mogp import *
 from script_variables import *
@@ -44,14 +42,14 @@ def check_static_energy(Q, Qs, T, Ts):
     
 
 def create_folders(output_folder):
-    data = os.path.join(output_folder, "DATA")
-    tmp = os.path.join(data, "tmp")
+    tmp = os.path.join(output_folder, "tmp")
 
-    shutil.rmtree(data)
-    os.mkdir(data)
+    #do not empty directory if it doesn't exist!
+    if os.path.isdir(tmp):
+        shutil.rmtree(output_folder)
+    os.mkdir(output_folder)
     os.mkdir(tmp)
 
-    return
 
 def read_grd(filename, nlon, nlat, nlev):
     nv3d = 4
@@ -74,7 +72,7 @@ def read_const_grd(filename, nlon, nlat, var):
 
 def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
     # Path to the bash script which carries out the forecast
-    forecast = os.path.join(SPEEDY_nature_root, "src", "dafcst.sh")
+    forecast = os.path.join(SPEEDY_fusion_root, "src", "dafcst.sh")
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
     return
@@ -176,6 +174,7 @@ def main():
         print("Starting Training")
         trained_gp, test_UM = train_mogp(plot_folder, n_train)
     else:
+        # Read in pre-trained GP model
         trained_gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
@@ -185,7 +184,7 @@ def main():
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
     nature_dir = os.path.join(SPEEDY_nature_root, "DATA", "nature")
-    data_folder = os.path.join(SPEEDY_data_read_root, "DATA")
+    data_folder = os.path.realpath(SPEEDY_data_read_root)
 
     IDate = "1982010100"
     dtDate = "1982010106"
@@ -226,7 +225,7 @@ def main():
         write_fortran(file, data)
         print("Done Writing")
         # # # Speedy integration forward
-        speedy_update(SPEEDY_nature_root, SPEEDY_data_read_root, IDate, dtDate)
+        speedy_update(SPEEDY_nature_root, os.path.realpath(SPEEDY_data_read_root), IDate, dtDate)
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))
         data = read_grd(file, nlon, nlat, nlev)
