@@ -74,7 +74,7 @@ def read_const_grd(filename, nlon, nlat, var):
 
 def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
     # Path to the bash script which carries out the forecast
-    forecast = os.path.join(os.getcwd(), "dafcst.sh")
+    forecast = os.path.join(SPEEDY_nature_root, "src", "dafcst.sh")
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
     return
@@ -184,7 +184,7 @@ def main():
 
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
-    nature_dir = os.path.join(SPEEDY_root, "DATA", "nature")
+    nature_dir = os.path.join(SPEEDY_nature_root, "DATA", "nature")
     data_folder = os.path.join(SPEEDY_data_read_root, "DATA")
 
     IDate = "1982010100"
@@ -199,8 +199,8 @@ def main():
     create_folders(SPEEDY_data_read_root)
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
     # Read in the orography and land/sea fraction
-    oro = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
-    lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
+    oro = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
+    lsm = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt("density.txt")
@@ -226,7 +226,7 @@ def main():
         write_fortran(file, data)
         print("Done Writing")
         # # # Speedy integration forward
-        speedy_update(SPEEDY_root, SPEEDY_data_read_root, IDate, dtDate)
+        speedy_update(SPEEDY_nature_root, SPEEDY_data_read_root, IDate, dtDate)
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))
         data = read_grd(file, nlon, nlat, nlev)
