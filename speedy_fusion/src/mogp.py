@@ -88,13 +88,13 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def train_mogp(n_train):
-    X = np.load(f'{processed_data_root}20200101_mean.npy')
-    Y = np.load(f'{processed_data_root}20200101_std.npy')
+    X = np.load(os.path.join(processed_data_root, "20200101_mean.npy"))
+    Y = np.load(os.path.join(processed_data_root, "20200101_std.npy"))
     # print(X.shape, Y.shape)
 
     print("Loaded in the X and Y")
-    oro = np.load(f'{processed_data_root}20200101_orography.npy')
-    land_sea = np.load(f'{processed_data_root}20200101_land_sea.npy')
+    oro = np.load(os.path.join(processed_data_root, "20200101_orography.npy"))
+    land_sea = np.load(os.path.join(processed_data_root, "20200101_land_sea.npy"))
 
     #X_train.shape:     (3, UM_levels, n_train)
     #X_test.shape:      (3, UM_levels, n_test)
@@ -141,10 +141,10 @@ def train_mogp(n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        pickle.dump(gp, open(os.path.join(f"{gp_directory_root}", "gp.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(gp_directory_root, "gp.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
-        gp = pickle.load(open(os.path.join(f"{gp_directory_root}", "gp.pkl"), "rb"))
+        gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
 
 
 
@@ -167,7 +167,7 @@ def train_mogp(n_train):
     variables = ['T', 'Q']
     for count, variable in enumerate(variables):
         for region in range(region_count):
-            figname = f"{pngs_root}mogp_{variable}_{region:02d}.png"
+            figname = os.path.join(pngs_root, f"mogp_{variable}_{region:02d}.png")
             if count == 0:
                 single_profile(truth[:8, region], variances[:8, region], figname)
             else:
