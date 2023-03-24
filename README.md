@@ -37,7 +37,7 @@ This script takes about ?? to complete
 
 ## Prior to GP training or running SPEEDY Fusion
 
-Copy, edit and rename `data_prep/python/script_variables_template.py` to `data_prep/python/script_variables.py` such that the variables satisfy the needs of your setup. This must include root directories for reading and storing the data.
+Copy, edit and rename `speedy_fusion/src/script_variables_template.py` to `speedy_fusion/src/script_variables.py` such that the variables satisfy the needs of your setup. This must include root directories for reading and storing the data.
 
 This file includes a flag for using a pre-trained GP model or training a new model when before launching SPEEDY. This default is to `True` i.e. train a new GP everytime.
 
