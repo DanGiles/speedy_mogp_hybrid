@@ -52,3 +52,9 @@ Now turn the `TRAIN_GP` flag to `False` in your `script_variables.py` file. Futu
 ## SPEEDY Fusion Run
 
 The script `/speedy_fusion/src/run-speedy.sh` launches the `wrapper.py` script which will load the pre-trained Gaussian process and run SPEEDY. Each time step within the main loop will relaunch SPEEDY to run for a 6 hour forecast. This loop will produce 10 years worth of forecast where each 6 hour simulation represents a different potential atmosphere as sampled from the Gaussian process.
+
+### SPEEDY Fusion Notes
+
+A few changes have been made to this code to suit our scientific needs.
+
+Line 16 of `/speedy_nature/model/source/makefile` has been commented out to ensure endianness of the programm remains consistent with the system default.
