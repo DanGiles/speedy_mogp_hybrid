@@ -202,7 +202,7 @@ def main():
     lsm = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
-    rho = np.loadtxt("density.txt")
+    rho = np.loadtxt(os.path.join(SPEEDY_fusion_root, "src", "density.txt"))
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
     # Main time loop
@@ -231,7 +231,7 @@ def main():
         data = read_grd(file, nlon, nlat, nlev)
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    np.save(os.join.path(SPEEDY_data_read_root, "precipitation.npy"), output_precip) 
+    np.save(os.path.join(SPEEDY_data_read_root, "precipitation.npy"), output_precip)
     return
 
 if __name__ == '__main__':
