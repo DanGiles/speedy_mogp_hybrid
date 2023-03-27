@@ -166,7 +166,6 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
 
 
 def main():
-    TRAIN_GP = False
     if TRAIN_GP:
         # Train the GP Model
         plot_folder = os.path.join("", "")
