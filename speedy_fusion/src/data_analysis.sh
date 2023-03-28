@@ -28,7 +28,6 @@ cd /home/ucakjcb/ml_climate_fusion/speedy_fusion/src
 echo $PWD
 
 module load python3/recommended
-source /home/ucakjcb/Scratch/venvs/mogp061/bin/activate
 
 # Run the application and put the output into a file called date.txt
 python /home/ucakjcb/ml_climate_fusion/speedy_fusion/src/data_analysis.py
