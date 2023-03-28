@@ -344,10 +344,12 @@ subroutine iogrid(imode)
         write (fluxesname(7:8),'(i2.2)') iday
         write (fluxesname(9:10),'(i2.2)') ihour
         open(101,file=fluxesname,form='unformatted',access='direct',recl=8*ix*il)
-        write (101,rec=1) (olr(j),j=1,ngp)
-        write (101,rec=2) (precls(j),j=1,ngp)
+        write (101,rec=1) (cloudc(j),j=1,ngp)
+        write (101,rec=2) (clstr(j),j=1,ngp)
         write (101,rec=3) (precnv(j),j=1,ngp)
-        write (101,rec=4) (cloudc(j),j=1,ngp)
+        write (101,rec=4) (precls(j),j=1,ngp)
+        write (101,rec=5) (tsr(j),j=1,ngp)
+        write (101,rec=6) (olr(j),j=1,ngp)
         close (101)
         print *,'Outputting the OLR, PRECLS, PRECNV and Cloud Fraction'
         print *,' OLR :',minval(olr),maxval(olr)
