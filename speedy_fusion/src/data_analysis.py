@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from datetime import datetime, date, timedelta
 
+from script_variables import *
 
-def read_grd(filename, nlon, nlat, nlev):
+
+def read_grd(filename, nlon, nlat, nlev) -> np.ndarray:
     nv3d = 4
     nv2d = 2
     f = np.fromfile(filename, dtype=np.float32)
@@ -16,7 +18,7 @@ def read_grd(filename, nlon, nlat, nlev):
     return data
 
 
-def loop_through(folder, filenames, array, nlon, nlat, nlev):
+def loop_through(folder, filenames, array, nlon, nlat, nlev) -> None:
     i = 0
     for date in filenames:
         for file in os.scandir(folder):
@@ -27,23 +29,25 @@ def loop_through(folder, filenames, array, nlon, nlat, nlev):
                 data = read_grd(f, nlon, nlat, nlev)
                 array[:,:,i] = data[:,:,33]
                 i = i + 1
-    return array
+    # return array
 
-# Directories
-mogp_folder = "/home/ucakdpg/Scratch/mogp-speedy/DATA"
+
 # Dimensions of the grid
 nlon = 96
 nlat = 48
 nlev = 8
-# Set up array of files
+
 # Set up array of files
 filenames_summer = []
 filenames_winter = []
+
 # Prepare the December, Janurary and February data
 winter = ["12", "01", "02"]
 summer = ["06", "07", "08"]
+
 # Time increments
 delta = timedelta(hours=6)
+
 # Initial Date
 idate = "1982010100"
 SPEEDY_DATE_FORMAT = "%Y%m%d%H"
@@ -60,9 +64,11 @@ while idate != "1992010100":
 # Set up the array
 pre_summer = np.zeros((nlon, nlat, len(filenames_summer)))
 pre_winter = np.zeros((nlon, nlat, len(filenames_winter)))
+
 # Loop through the files and read in the precip data
-pre_summer = loop_through(mogp_folder, filenames_summer, pre_summer, nlon, nlat, nlev)
-pre_winter = loop_through(mogp_folder, filenames_winter, pre_winter, nlon, nlat, nlev)
+loop_through(SPEEDY_data_read_root, filenames_summer, pre_summer, nlon, nlat, nlev)
+loop_through(SPEEDY_data_read_root, filenames_winter, pre_winter, nlon, nlat, nlev)
+
 # Save the output
 np.save("/home/ucakdpg/Scratch/mogp-speedy/analysis/pre_JJA_nature.npy", pre_summer)
 np.save("/home/ucakdpg/Scratch/mogp-speedy/analysis/pre_DJF_nature.npy", pre_winter)
