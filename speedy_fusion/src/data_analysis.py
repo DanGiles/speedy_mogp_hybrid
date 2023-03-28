@@ -70,6 +70,6 @@ loop_through(SPEEDY_data_read_root, filenames_summer, pre_summer, nlon, nlat, nl
 loop_through(SPEEDY_data_read_root, filenames_winter, pre_winter, nlon, nlat, nlev)
 
 # Save the output
-np.save("/home/ucakdpg/Scratch/mogp-speedy/analysis/pre_JJA_nature.npy", pre_summer)
-np.save("/home/ucakdpg/Scratch/mogp-speedy/analysis/pre_DJF_nature.npy", pre_winter)
+np.save(os.path.join(analysis_root, "pre_JJA_nature.npy"), pre_summer)
+np.save(os.path.join(analysis_root, "pre_DJF_nature.npy"), pre_winter)
 
