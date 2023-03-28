@@ -4,13 +4,12 @@ import os
 import numpy as np
 import subprocess
 from datetime import datetime, date, timedelta
-import shutil
+import shutil # for removing data from previous simulations
 import mogp_emulator
-import dill
-import itertools
-#import mogp_emulator
+import pickle
 
 from mogp import *
+from script_variables import *
 
 def check_total_water(Q, Qs, rho):
     num = 0
@@ -43,14 +42,14 @@ def check_static_energy(Q, Qs, T, Ts):
     
 
 def create_folders(output_folder):
-    data = os.path.join(output_folder, "DATA")
-    tmp = os.path.join(data, "tmp")
+    tmp = os.path.join(output_folder, "tmp")
 
-    shutil.rmtree(data)
-    os.mkdir(data)
+    #do not empty directory if it doesn't exist!
+    if os.path.isdir(tmp):
+        shutil.rmtree(output_folder)
+    os.mkdir(output_folder)
     os.mkdir(tmp)
 
-    return
 
 def read_grd(filename, nlon, nlat, nlev):
     nv3d = 4
@@ -73,10 +72,9 @@ def read_const_grd(filename, nlon, nlat, var):
 
 def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
     # Path to the bash script which carries out the forecast
-    forecast = os.path.join("/home/ucakdpg/Scratch/mogp-speedy", "dafcst.sh")
+    forecast = os.path.join(SPEEDY_fusion_root, "src", "dafcst.sh")
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
-    # Process=Popen([str(forecast), str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)])
     return
 
 def write_fortran(filename, data):
@@ -168,21 +166,24 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
 
 
 def main():
-    # Train the GP Model
-    plot_folder = os.path.join("", "")
-    n_train = 500
-    print("Starting Training")
-    trained_gp, test_UM = train_mogp(plot_folder, n_train)
-    #trained_gp = dill.load(open(os.path.join(plot_folder, "gp_2nd.pkl"), "rb"))
+    if TRAIN_GP:
+        # Train the GP Model
+        plot_folder = os.path.join("", "")
+        n_train = 500
+        print("Starting Training")
+        trained_gp, test_UM = train_mogp(plot_folder, n_train)
+    else:
+        # Read in pre-trained GP model
+        trained_gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
 
+
+
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
-    SPEEDY = ""
-    nature_dir = os.path.join(SPEEDY, "DATA", "nature")
-    output_folder = ""
-    data_folder = os.path.join(output_folder, "DATA")
+    nature_dir = os.path.join(SPEEDY_nature_root, "DATA", "nature")
+    data_folder = os.path.realpath(SPEEDY_data_read_root)
 
     IDate = "1982010100"
     dtDate = "1982010106"
@@ -193,14 +194,14 @@ def main():
     dt = 6
     
     # Initialisation steps
-    create_folders(output_folder)
+    create_folders(SPEEDY_data_read_root)
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
     # Read in the orography and land/sea fraction
-    oro = read_const_grd(os.path.join(SPEEDY,"model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
-    lsm = read_const_grd(os.path.join(SPEEDY,"model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
+    oro = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
+    lsm = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
-    rho = np.loadtxt("constants/density.txt")
+    rho = np.loadtxt(os.path.join(SPEEDY_fusion_root, "src", "density.txt"))
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
     # Main time loop
@@ -223,13 +224,13 @@ def main():
         write_fortran(file, data)
         print("Done Writing")
         # # # Speedy integration forward
-        speedy_update(SPEEDY, output_folder, IDate, dtDate)
+        speedy_update(SPEEDY_nature_root, os.path.realpath(SPEEDY_data_read_root), IDate, dtDate)
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))
         data = read_grd(file, nlon, nlat, nlev)
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    np.save("", output_precip) 
+    np.save(os.path.join(SPEEDY_data_read_root, "precipitation.npy"), output_precip)
     return
 
 if __name__ == '__main__':

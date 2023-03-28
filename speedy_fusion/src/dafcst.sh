@@ -6,14 +6,16 @@
 
 # Input for this shell
 SPEEDY=$1
-OUTPUT=$2/DATA
+OUTPUT=$2
 YMDH=$3
 TYMDH=$4
 
 TMPDIR=${OUTPUT}/tmp
 cd ${TMPDIR} 
 # Create directory for this process
-cp /home/ucakdpg/Scratch/mogp-speedy/imp .
+#cp /home/ucakdpg/Scratch/mogp-speedy/imp .
+cp $SPEEDY/DATA/nature/imp .
+
 # Set up boundary files
 SB=$SPEEDY/model/data/bc/t30/clim
 SC=$SPEEDY/model/data/bc/t30/anom
@@ -38,5 +40,5 @@ echo $YMDH | cut -c9-10 >> fort.2
 mv ${TYMDH}.grd $OUTPUT
 rm ${TYMDH}_p.grd
 mv ${TYMDH}_fluxes.grd $OUTPUT
-#rm ${TMPDIR}/*
+rm ${TMPDIR}/*
 exit 0
