@@ -119,6 +119,7 @@ filenames_winter = []
 filenames_summer = []
 
 # # Populate the allowed dates
+print("Finding dates")
 while idate != "1992010100":
     if idate[4:6] in winter:
         filenames_winter.append(idate)
@@ -127,6 +128,7 @@ while idate != "1992010100":
     newdate = datetime.strptime(idate, SPEEDY_DATE_FORMAT) + delta
     idate = newdate.strftime(SPEEDY_DATE_FORMAT)
 
+print("all dates found!")
 
 n_winter = len(filenames_winter)
 n_summer = len(filenames_summer)
@@ -137,24 +139,26 @@ n_summer = len(filenames_summer)
 ###########################################################
 # Create the npy files
 
- 
+
 # if analysis directory doesn't exist, make the directory.
-if not os.path.isdir(os.path.join(analysis_root, "analysis")):
-    os.mkdir(os.path.join(analysis_root, "analysis"))
+if not os.path.isdir(analysis_root):
+    os.mkdir(analysis_root)
 
 #################### NATURE ####################
 if NATURE:
+    print("Start NATURE")
     ################################
     ######## WINTER
 
+    print("Start winter")
     # non-fluxes
     output = loop_through_grd(
             os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
             filenames_winter, 
             n_winter
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_DJF_nature.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_DJF_nature.npy")
         np.save(filename, array)
 
     #fluxes
@@ -163,31 +167,32 @@ if NATURE:
             filenames_winter, 
             n_winter
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_DJF_nature.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_DJF_nature.npy")
         np.save(filename, array)
     
     ################################
     ######## SUMMER
 
+    print("Start summer")
     # non-fluxes
     output = loop_through_grd(
             os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
             filenames_summer, 
             n_summer
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_JJA_nature.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_JJA_nature.npy")
         np.save(filename, array)
 
     # fluxes
     output = loop_through_flx(
-            os.path.join(SPEEDY_nature_root, "analysis", "DATA", "nature"), 
+            os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
             filenames_summer, 
             n_summer
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_JJA_nature.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_JJA_nature.npy")
         np.save(filename, array)
 
 
@@ -195,17 +200,19 @@ if NATURE:
 
 #################### FUSION ####################
 if FUSION:
+    print("Start FUSION")
     ################################
     ######## WINTER
 
+    print("Start winter")
     # non-fluxes
     output = loop_through_grd(
             SPEEDY_data_read_root, 
             filenames_winter, 
             n_winter
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_DJF_fusion.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_DJF_fusion.npy")
         np.save(filename, array)
 
     # fluxes
@@ -214,21 +221,22 @@ if FUSION:
             filenames_winter, 
             n_winter
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_DJF_fusion.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_DJF_fusion.npy")
         np.save(filename, array)
     
     ################################
     ######## SUMMER
 
+    print("Start summer")
     # non-fluxes
     output = loop_through_grd(
             SPEEDY_data_read_root, 
             filenames_summer, 
             n_summer
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_JJA_fusion.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_JJA_fusion.npy")
         np.save(filename, array)
 
     # fluxes
@@ -237,6 +245,6 @@ if FUSION:
             filenames_summer, 
             n_summer
         )
-    for varname, array in output:
-        filename = os.path.join(analysis_root, "analysis", f"{varname}_JJA_fusion.npy")
+    for varname, array in output.items():
+        filename = os.path.join(analysis_root, f"{varname}_JJA_fusion.npy")
         np.save(filename, array)
