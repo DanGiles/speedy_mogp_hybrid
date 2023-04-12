@@ -48,7 +48,7 @@ def loop_through_grd(folder, filenames, n) -> Dict[str, np.ndarray]:
             't': t,
             'q': q, 
             'precip': precip,
-            'q': p,
+            'p': p,
         }
 
 
@@ -73,7 +73,7 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
             f = os.path.join(folder, file)
             # checking if it is a file and if correct date
             if os.path.isfile(f) and date in f and "_fluxes.grd" in f:
-                data = read_flx(f, nlon, nlat)
+                data = read_flx(f)
                 
                 cloudc[..., i]  = data[..., 0]
                 clstr[..., i]   = data[..., 1]
