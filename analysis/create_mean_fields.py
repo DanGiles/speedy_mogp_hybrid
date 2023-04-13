@@ -13,8 +13,17 @@ for season in ['DJF', 'JJA']:
     for run in ['nature', 'fusion']:
         for var in vars_2d + vars_3d:
             f = np.load(os.path.join(analysis_root, f"{var}_{season}_{run}.npy"))
-            output = np.mean(f, axis=-1)
+
+            # calculate mean
+            output_mean = np.mean(f, axis=-1)
             np.save(
                 os.path.join(analysis_root, f"mean_{var}_{season}_{run}.npy"),
-                output
+                output_mean
+            )
+
+            # calculate variance
+            output_var = np.var(f, axis=-1)
+            np.save(
+                os.path.join(analysis_root, f"var_{var}_{season}_{run}.npy"),
+                output_var
             )
