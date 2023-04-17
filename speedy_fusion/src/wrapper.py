@@ -105,7 +105,8 @@ def step_datetime(idate, dtdate, SPEEDY_DATE_FORMAT, dt):
 
 
 def data_prep(data, oro, ls, nlon, nlat):
-    train = np.empty(((nlon*nlat),19), dtype = np.float64)
+    # train = np.empty(((nlon*nlat),19), dtype = np.float64)
+    train = np.empty(((nlon*nlat),20), dtype = np.float64)
 
     T_mean = data[:,:,16:24]
     Q_mean = data[:,:,24:32]
@@ -114,11 +115,17 @@ def data_prep(data, oro, ls, nlon, nlat):
     low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
     Q_mean[low_values_flags] = 1e-6
 
+    # train[:, 0] = data[:,:,32].flatten()
+    # train[:, 1] = oro.flatten()
+    # train[:, 2] = ls.flatten()
+    # train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
+    # train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
+
     train[:, 0] = data[:,:,32].flatten()
-    train[:, 1] = oro.flatten()
-    train[:, 2] = ls.flatten()
-    train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
-    train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
+    train[:, 1:3] = oro.flatten()
+    train[:, 3] = ls.flatten()
+    train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
+    train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 8))
  
     return train
 
@@ -148,8 +155,10 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
     
     variance, uncer, d = trained_gp.predict(test)
     print("Prediction")
-    T_mean = test[:, 3:11]
-    Q_mean = test[:, 11:]
+    # T_mean = test[:, 3:11]
+    # Q_mean = test[:, 11:]
+    T_mean = test[:, 4:12]
+    Q_mean = test[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
