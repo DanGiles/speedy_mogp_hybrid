@@ -6,16 +6,19 @@ from typing import Tuple
 import os
 import numpy as np 
 import mogp_emulator
-# import dill
 import pickle
-# Load internal functions
-from profile_plotting import *
-# from loop_files import *
-# from data_prep import *
-# from dgp import *
-# from prep_UM import *
 
+from profile_plotting import *
 from script_variables import *
+
+def make_dir(path: str) -> None:
+    #do not empty directory if it doesn't exist!
+    if os.path.isdir(path):
+        import shutil
+        shutil.rmtree(path)
+    # make directory
+    os.mkdir(path)
+
 
 def hypercube(
         X: np.ndarray, 
@@ -141,10 +144,10 @@ def train_mogp(n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        pickle.dump(gp, open(os.path.join(gp_directory_root, "gp.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
-        gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
+        gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
 
 
 
@@ -164,10 +167,12 @@ def train_mogp(n_train):
     variances, uncer, d = gp.predict(test.T)
     # print(test.dtype, variances.dtype, truth.dtype)
 
+    pngs_path = os.path.join(pngs_root, GP_name)
+    make_dir(pngs_path)
     variables = ['T', 'Q']
     for count, variable in enumerate(variables):
         for region in range(region_count):
-            figname = os.path.join(pngs_root, f"mogp_{variable}_{region:02d}.png")
+            figname = os.path.join(pngs_path, f"mogp_{variable}_{region:02d}.png")
             if count == 0:
                 single_profile(truth[:8, region], variances[:8, region], figname)
             else:

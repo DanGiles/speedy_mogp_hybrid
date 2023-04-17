@@ -39,6 +39,15 @@ def check_static_energy(Q, Qs, T, Ts):
     print("Number of physically inconsistent profiles (moist static energy) %i"%num)
 
     return Ts
+
+
+def make_dir(path: str) -> None:
+    #do not empty directory if it doesn't exist!
+    if os.path.isdir(path):
+        import shutil
+        shutil.rmtree(path)
+    # make directory
+    os.mkdir(path)
     
 
 def create_folders(output_folder):
@@ -174,16 +183,13 @@ def main():
         trained_gp, test_UM = train_mogp(plot_folder, n_train)
     else:
         # Read in pre-trained GP model
-        trained_gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
+        trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
-
-
 
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
     nature_dir = os.path.join(SPEEDY_nature_root, "DATA", "nature")
-    data_folder = os.path.realpath(SPEEDY_data_read_root)
 
     IDate = "1982010100"
     dtDate = "1982010106"
@@ -194,20 +200,25 @@ def main():
     dt = 6
     
     # Initialisation steps
-    create_folders(SPEEDY_data_read_root)
+    data_folder = os.path.join(SPEEDY_fusion_data_root, GP_name)
+    create_folders(data_folder)
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
+
     # Read in the orography and land/sea fraction
     oro = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
     lsm = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt(os.path.join(SPEEDY_fusion_root, "src", "density.txt"))
+
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
+
     # Main time loop
     for t in range(0,number_time_steps):
         # Time counters
         print(IDate, dtDate, t)
+
         # Time to do the MOGP magic
         # Loop through all columns
         test = data_prep(data, oro, lsm, nlon, nlat)
@@ -218,19 +229,23 @@ def main():
         data[:,:,16:24] = resampled_T[:,:,:]
         data[:,:,24:32] = resampled_Q[:,:,:]
         output_precip[:,:,t] = data[:,:,33]
+
         # # Write updated data to fortran speedy file
         file = os.path.join(data_folder, (IDate+".grd"))
         print("Writing file")
         write_fortran(file, data)
         print("Done Writing")
+
         # # # Speedy integration forward
-        speedy_update(SPEEDY_nature_root, os.path.realpath(SPEEDY_data_read_root), IDate, dtDate)
+        speedy_update(SPEEDY_nature_root, data_folder, IDate, dtDate)
+
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))
         data = read_grd(file, nlon, nlat, nlev)
         # # Update time counters
         IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
-    np.save(os.path.join(SPEEDY_data_read_root, "precipitation.npy"), output_precip)
+
+    np.save(os.path.join(data_folder, "precipitation.npy"), output_precip)
     return
 
 if __name__ == '__main__':

@@ -98,14 +98,14 @@ def save_summaries(array, filename) -> None:
     # calculate mean
     output_mean = np.mean(array, axis=-1)
     np.save(
-        os.path.join(analysis_root, f"mean_{filename}.npy"),
+        os.path.join(analysis_root, GP_name, f"mean_{filename}.npy"),
         output_mean
     )
 
     # calculate variance
     output_var = np.var(array, axis=-1)
     np.save(
-        os.path.join(analysis_root, f"var_{filename}.npy"),
+        os.path.join(analysis_root, GP_name, f"var_{filename}.npy"),
         output_var
     )
 
@@ -158,9 +158,14 @@ n_summer = len(filenames_summer)
 # Create the npy files
 
 
-# if analysis directory doesn't exist, make the directory.
+# if analysis directory does not exist, make the directory
 if not os.path.isdir(analysis_root):
     os.mkdir(analysis_root)
+
+# if GP_name directory does not exist, make the directory
+analysis_path = os.path.join(analysis_root, GP_name)
+if not os.path.isdir(analysis_path):
+    os.mkdir(analysis_path)
 
 #################### NATURE ####################
 if NATURE:
@@ -215,13 +220,14 @@ if NATURE:
 #################### FUSION ####################
 if FUSION:
     print("Start FUSION")
+    data_folder = os.path.join(SPEEDY_fusion_data_root, GP_name)
     ################################
     ######## WINTER
 
     print("Start winter")
     # non-fluxes
     output = loop_through_grd(
-            SPEEDY_data_read_root, 
+            data_folder, 
             filenames_winter, 
             n_winter
         )
@@ -230,7 +236,7 @@ if FUSION:
 
     # fluxes
     output = loop_through_flx(
-            SPEEDY_data_read_root, 
+            data_folder, 
             filenames_winter, 
             n_winter
         )
@@ -243,7 +249,7 @@ if FUSION:
     print("Start summer")
     # non-fluxes
     output = loop_through_grd(
-            SPEEDY_data_read_root, 
+            data_folder, 
             filenames_summer, 
             n_summer
         )
@@ -252,7 +258,7 @@ if FUSION:
 
     # fluxes
     output = loop_through_flx(
-            SPEEDY_data_read_root, 
+            data_folder, 
             filenames_summer, 
             n_summer
         )
