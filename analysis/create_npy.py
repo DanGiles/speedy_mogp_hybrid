@@ -23,7 +23,7 @@ def loop_through_grd(folder, filenames, n) -> Dict[str, np.ndarray]:
     t = np.zeros_like(u)                # temperature
     q = np.zeros_like(u)                # specific humidity
     precip = np.zeros((nlon, nlat, n))  # precipitation
-    p = np.zeros_like(precip)           # surface pressure
+    ps = np.zeros_like(precip)           # surface pressure
 
     i = 0
     for date in filenames:
@@ -37,8 +37,8 @@ def loop_through_grd(folder, filenames, n) -> Dict[str, np.ndarray]:
                 v[..., i] = data[..., 8:16]
                 t[..., i] = data[..., 16:24]
                 q[..., i] = data[..., 24:32]
-                precip[..., i] = data[..., 32]
-                p[..., i] = data[..., 33]
+                ps[..., i] = data[..., 32]
+                precip[..., i] = data[..., 33]
 
                 i += 1
 
@@ -48,7 +48,7 @@ def loop_through_grd(folder, filenames, n) -> Dict[str, np.ndarray]:
             't': t,
             'q': q, 
             'precip': precip,
-            'p': p,
+            'ps': ps,
         }
 
 
@@ -92,6 +92,24 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
             'tsr': tsr,
             'olr': olr,
         }
+
+# only save the field means and variances
+def save_summaries(array, filename) -> None:
+    # calculate mean
+    output_mean = np.mean(array, axis=-1)
+    np.save(
+        os.path.join(analysis_root, f"mean_{filename}.npy"),
+        output_mean
+    )
+
+    # calculate variance
+    output_var = np.var(array, axis=-1)
+    np.save(
+        os.path.join(analysis_root, f"var_{filename}.npy"),
+        output_var
+    )
+
+
 
 
 #######################################################
@@ -158,8 +176,7 @@ if NATURE:
             n_winter
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_DJF_nature.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_DJF_nature")
 
     #fluxes
     output = loop_through_flx(
@@ -168,8 +185,7 @@ if NATURE:
             n_winter
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_DJF_nature.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_DJF_nature")
     
     ################################
     ######## SUMMER
@@ -182,8 +198,7 @@ if NATURE:
             n_summer
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_JJA_nature.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_JJA_nature")
 
     # fluxes
     output = loop_through_flx(
@@ -192,8 +207,7 @@ if NATURE:
             n_summer
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_JJA_nature.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_JJA_nature")
 
 
 
@@ -212,8 +226,7 @@ if FUSION:
             n_winter
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_DJF_fusion.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_DJF_fusion")
 
     # fluxes
     output = loop_through_flx(
@@ -222,8 +235,7 @@ if FUSION:
             n_winter
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_DJF_fusion.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_DJF_fusion")
     
     ################################
     ######## SUMMER
@@ -236,8 +248,7 @@ if FUSION:
             n_summer
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_JJA_fusion.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_JJA_fusion")
 
     # fluxes
     output = loop_through_flx(
@@ -246,5 +257,4 @@ if FUSION:
             n_summer
         )
     for varname, array in output.items():
-        filename = os.path.join(analysis_root, f"{varname}_JJA_fusion.npy")
-        np.save(filename, array)
+        save_summaries(array, f"{varname}_JJA_fusion")
