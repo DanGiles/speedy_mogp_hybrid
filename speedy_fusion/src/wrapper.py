@@ -122,7 +122,7 @@ def data_prep(data, oro, ls, nlon, nlat):
     # train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
 
     train[:, 0] = data[:,:,32].flatten()
-    train[:, 1:3] = oro.flatten()
+    train[:, 1:3] = oro
     train[:, 3] = ls.flatten()
     train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
     train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 8))
