@@ -350,6 +350,12 @@ subroutine iogrid(imode)
         write (101,rec=4) (precls(j),j=1,ngp)
         write (101,rec=5) (tsr(j),j=1,ngp)
         write (101,rec=6) (olr(j),j=1,ngp)
+
+        write (101,rec=7) (save2d_2(j,2),j=1,ngp) ! summed precnv
+        write (101,rec=8) (save2d_2(j,1),j=1,ngp) ! summed precls
+        write (101,rec=9) (save2d_2(j,6),j=1,ngp) ! summed tsr
+        write (101,rec=10) (save2d_2(j,7),j=1,ngp) ! summed olr
+
         close (101)
         print *,'Outputting the OLR, PRECLS, PRECNV and Cloud Fraction'
         print *,' OLR :',minval(olr),maxval(olr)
