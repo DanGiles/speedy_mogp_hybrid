@@ -6,16 +6,19 @@ from typing import Tuple
 import os
 import numpy as np 
 import mogp_emulator
-# import dill
 import pickle
-# Load internal functions
-from profile_plotting import *
-# from loop_files import *
-# from data_prep import *
-# from dgp import *
-# from prep_UM import *
 
+from profile_plotting import *
 from script_variables import *
+
+def make_dir(path: str) -> None:
+    #do not empty directory if it doesn't exist!
+    if os.path.isdir(path):
+        import shutil
+        shutil.rmtree(path)
+    # make directory
+    os.mkdir(path)
+
 
 def hypercube(
         X: np.ndarray, 
@@ -43,7 +46,8 @@ def hypercube(
     time_indices = inputs[:, 2]
     X_train = X[:, :, cell_indices, site_indices, time_indices]
     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
-    oro_train = oro[0, cell_indices, site_indices]
+    # oro_train = oro[0, cell_indices, site_indices]
+    oro_train = oro[:, cell_indices, site_indices]
     ls_train = ls[cell_indices, site_indices]
 
     # Testing data
@@ -52,7 +56,8 @@ def hypercube(
     time_indices = np.random.choice(4, size=n_test, replace=True)
     X_test = X[:, :, cell_indices, site_indices, time_indices]
     Y_test = Y[:, :, cell_indices, site_indices, time_indices]
-    oro_test = oro[0, cell_indices, site_indices]
+    # oro_test = oro[0, cell_indices, site_indices]
+    oro_test = oro[:, cell_indices, site_indices]
     ls_test = ls[cell_indices, site_indices]
 
     return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test
@@ -72,14 +77,21 @@ def crop_speedy(array: np.ndarray) -> np.ndarray:
 
 
 def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
-    train = np.empty((19, X.shape[2]), dtype = np.float64)
+    # train = np.empty((19, X.shape[2]), dtype = np.float64)
+    train = np.empty((20, X.shape[2]), dtype = np.float64)
     target = np.empty((16, X.shape[2]), dtype = np.float64)
 
+    # train[0, :] = X_ps  #surface level AVG air pressure
+    # train[1, :] = oro   #orography
+    # train[2, :] = ls    #land-sea ratio
+    # train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
+    # train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
+
     train[0, :] = X_ps  #surface level AVG air pressure
-    train[1, :] = oro   #orography
-    train[2, :] = ls    #land-sea ratio
-    train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
-    train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
+    train[1:3, :] = oro   #orography
+    train[3, :] = ls    #land-sea ratio
+    train[4:12, :] = X[0, :, :] #AVG air temp at desired levels
+    train[12:, :] = X[1, :, :]  #AVG humudity at desired levels
 
     target[:8, :] = y[0, :] #STD air temp at desired levels
     target[8:, :] = y[1, :] #STD humudity at desired levels
@@ -100,8 +112,8 @@ def train_mogp(n_train):
     #X_test.shape:      (3, UM_levels, n_test)
     #y_train.shape:     (2, UM_levels, n_train)
     #y_test.shape:      (2, UM_levels, n_test)
-    #oro_train.shape:   (n_train, )
-    #oro_test.shape:    (n_test, )
+    #oro_train.shape:   (n_train, ) or (2, n_train)
+    #oro_test.shape:    (n_test, ) or (2, n_test)
     #ls_train.shape:    (n_train, )
     #ls_test.shape:     (n_test, )
     X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test = hypercube(X, Y, oro, land_sea, n_train)
@@ -141,10 +153,10 @@ def train_mogp(n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        pickle.dump(gp, open(os.path.join(gp_directory_root, "gp.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
-        gp = pickle.load(open(os.path.join(gp_directory_root, "gp.pkl"), "rb"))
+        gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
 
 
 
@@ -164,10 +176,12 @@ def train_mogp(n_train):
     variances, uncer, d = gp.predict(test.T)
     # print(test.dtype, variances.dtype, truth.dtype)
 
+    pngs_path = os.path.join(pngs_root, GP_name)
+    make_dir(pngs_path)
     variables = ['T', 'Q']
     for count, variable in enumerate(variables):
         for region in range(region_count):
-            figname = os.path.join(pngs_root, f"mogp_{variable}_{region:02d}.png")
+            figname = os.path.join(pngs_path, f"mogp_{variable}_{region:02d}.png")
             if count == 0:
                 single_profile(truth[:8, region], variances[:8, region], figname)
             else:
