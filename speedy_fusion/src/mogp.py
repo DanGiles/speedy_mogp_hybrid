@@ -46,8 +46,12 @@ def hypercube(
     time_indices = inputs[:, 2]
     X_train = X[:, :, cell_indices, site_indices, time_indices]
     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
-    # oro_train = oro[0, cell_indices, site_indices]
-    oro_train = oro[:, cell_indices, site_indices]
+    if GP_name == "gp_without_oro_var":
+        oro_train = oro[0, cell_indices, site_indices]
+    elif GP_name == "gp_with_oro_var":
+        oro_train = oro[:, cell_indices, site_indices]
+    else:
+        raise Exception("GP_name not recognised.")
     ls_train = ls[cell_indices, site_indices]
 
     # Testing data
@@ -56,8 +60,12 @@ def hypercube(
     time_indices = np.random.choice(4, size=n_test, replace=True)
     X_test = X[:, :, cell_indices, site_indices, time_indices]
     Y_test = Y[:, :, cell_indices, site_indices, time_indices]
-    # oro_test = oro[0, cell_indices, site_indices]
-    oro_test = oro[:, cell_indices, site_indices]
+    if GP_name == "gp_without_oro_var":
+        oro_test = oro[0, cell_indices, site_indices]
+    elif GP_name == "gp_with_oro_var":
+        oro_test = oro[:, cell_indices, site_indices]
+    else:
+        raise Exception("GP_name not recognised.")
     ls_test = ls[cell_indices, site_indices]
 
     return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test
@@ -77,22 +85,26 @@ def crop_speedy(array: np.ndarray) -> np.ndarray:
 
 
 def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
-    # train = np.empty((19, X.shape[2]), dtype = np.float64)
-    train = np.empty((20, X.shape[2]), dtype = np.float64)
+    if GP_name == "gp_without_oro_var":
+        train = np.empty((19, X.shape[2]), dtype = np.float64)
+
+        train[0, :] = X_ps  #surface level AVG air pressure
+        train[1, :] = oro   #orography
+        train[2, :] = ls    #land-sea ratio
+        train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
+        train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
+    elif GP_name == "gp_with_oro_var":
+        train = np.empty((20, X.shape[2]), dtype = np.float64)
+
+        train[0, :] = X_ps  #surface level AVG air pressure
+        train[1:3, :] = oro   #orography
+        train[3, :] = ls    #land-sea ratio
+        train[4:12, :] = X[0, :, :] #AVG air temp at desired levels
+        train[12:, :] = X[1, :, :]  #AVG humudity at desired levels
+    else:
+        raise Exception("GP_name not recognised.")
+    
     target = np.empty((16, X.shape[2]), dtype = np.float64)
-
-    # train[0, :] = X_ps  #surface level AVG air pressure
-    # train[1, :] = oro   #orography
-    # train[2, :] = ls    #land-sea ratio
-    # train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
-    # train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
-
-    train[0, :] = X_ps  #surface level AVG air pressure
-    train[1:3, :] = oro   #orography
-    train[3, :] = ls    #land-sea ratio
-    train[4:12, :] = X[0, :, :] #AVG air temp at desired levels
-    train[12:, :] = X[1, :, :]  #AVG humudity at desired levels
-
     target[:8, :] = y[0, :] #STD air temp at desired levels
     target[8:, :] = y[1, :] #STD humudity at desired levels
 
