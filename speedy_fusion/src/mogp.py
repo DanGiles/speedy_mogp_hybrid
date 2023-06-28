@@ -183,9 +183,9 @@ def train_mogp(n_train):
         for region in range(region_count):
             figname = os.path.join(pngs_path, f"mogp_{variable}_{region:02d}.png")
             if count == 0:
-                single_profile(truth[:8, region], variances[:8, region], figname)
+                single_profile2(truth[:8, region], variances[:8, region], region, figname)
             else:
-                single_profile(truth[8:, region], variances[8:, region], figname)
+                single_profile2(truth[8:, region], variances[8:, region], region, figname)
 
 
 if __name__ == '__main__':
