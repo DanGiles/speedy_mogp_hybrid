@@ -9,6 +9,7 @@ subroutine iogrid(imode)
     !                  = 3 : write a GrADS control file (for p)
     !                  = 4 : write model variables  to a gridded file (sigma)
     !                  = 5 : write a GrADS control file (for sigma)
+    !                  = 6 : write extra model variables to a gridded file (sigma)
     !  Initialized common blocks (if IMODE = 1) : DYNSP1, SFCANOM
     !
 
