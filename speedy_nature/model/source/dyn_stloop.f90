@@ -50,7 +50,6 @@ subroutine stloop(istep)
         end if
 
         if (ihout) then
-            ! if (ipout) call iogrid (2) !output for every 6 hours
             call iogrid (4) !gridded data output for every 6 hours
         end if
         
