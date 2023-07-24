@@ -50,7 +50,7 @@ def single_profile2(variance_t, variance_est, region, figname) -> None:
     pressure_levels = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
 
     fig, axs = plt.subplots(1, 1)
-    axs.plot((variance_t), pressure_levels, 'o', color='red', label="UM 'Trueth'")
+    axs.plot((variance_t), pressure_levels, 'o', color='red', label="UM 'Truth'")
     axs.plot((variance_est), pressure_levels, 'x', color='blue', label="MOGP Predicted")
 
     axs.set_ylabel("Pressure (Pa)")
