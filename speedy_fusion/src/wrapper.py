@@ -106,7 +106,7 @@ def read_oro_var() -> np.ndarray:
     oro_var_data = np.zeros((96, 48))
     row_i = 0
     with open(oro_var_data_file) as f:
-        oro_var_data[row_i, :] = f.readline()
+        oro_var_data[row_i, :] = np.fromstring(f.readline().strip(), dtype=float, sep=',')
         row_i += 1
     return oro_var_data
 
@@ -230,7 +230,7 @@ def main():
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt(os.path.join(SPEEDY_fusion_root, "src", "density.txt"))
     if GP_name == "gp_with_oro_var":
-        np.append(oro, read_oro_var(), axis=0)
+        np.append(oro, read_oro_var().flatten(), axis=1)
 
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
