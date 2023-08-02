@@ -102,12 +102,15 @@ def step_datetime(idate, dtdate, SPEEDY_DATE_FORMAT, dt):
     new_dtdate = datetime.strptime(dtdate, SPEEDY_DATE_FORMAT) + delta
     return new_idate.strftime(SPEEDY_DATE_FORMAT),new_dtdate.strftime(SPEEDY_DATE_FORMAT)
 
+def read_oro_var() -> np.ndarray:
+    oro_var_data = np.zeros((96, 48))
+    row_i = 0
+    with open(oro_var_data_file) as f:
+        oro_var_data[row_i, :] = f.readline()
+        row_i += 1
+    return oro_var_data
 
-
-def data_prep(data, oro, ls, nlon, nlat):
-    # train = np.empty(((nlon*nlat),19), dtype = np.float64)
-    train = np.empty(((nlon*nlat),20), dtype = np.float64)
-
+def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     T_mean = data[:,:,16:24]
     Q_mean = data[:,:,24:32]
     Q_mean = np.flip(Q_mean, axis = 2)
@@ -115,50 +118,57 @@ def data_prep(data, oro, ls, nlon, nlat):
     low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
     Q_mean[low_values_flags] = 1e-6
 
-    # train[:, 0] = data[:,:,32].flatten()
-    # train[:, 1] = oro.flatten()
-    # train[:, 2] = ls.flatten()
-    # train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
-    # train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
-
-    train[:, 0] = data[:,:,32].flatten()
-    train[:, 1:3] = oro
-    train[:, 3] = ls.flatten()
-    train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
-    train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 8))
- 
+    if GP_name == "gp_without_oro_var":
+        # Version for gp_without_oro_var
+        train = np.empty(((nlon*nlat),19), dtype = np.float64)
+        train[:, 0] = data[:,:,32].flatten()
+        train[:, 1] = oro.flatten()
+        train[:, 2] = ls.flatten()
+        train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
+        train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
+    elif GP_name == "gp_with_oro_var":
+        # Version for gp_with_oro_var
+        train = np.empty(((nlon*nlat),20), dtype = np.float64)
+        train[:, 0] = data[:,:,32].flatten()
+        train[:, 1:3] = oro
+        train[:, 3] = ls.flatten()
+        train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
+        train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 8))
+    else:
+        raise ValueError(f"GP_name not recognised, {GP_name} provided.")
     return train
 
 
-def mogp_prediction(test, gp, nlon, nlat, nlev):
+# def mogp_prediction(test, gp, nlon, nlat, nlev):
 
-    variance, uncer, d = gp.predict(test)
-    T_mean = test[:, 3:11]
-    Q_mean = test[:, 11:]
-    resampled_T = np.empty((nlon*nlat, nlev), dtype = np.float64)
-    resampled_Q = np.empty((nlon*nlat, nlev), dtype = np.float64)
+#     variance, uncer, d = gp.predict(test)
+#     T_mean = test[:, 3:11]
+#     Q_mean = test[:, 11:]
+#     resampled_T = np.empty((nlon*nlat, nlev), dtype = np.float64)
+#     resampled_Q = np.empty((nlon*nlat, nlev), dtype = np.float64)
 
-    low_values_flags = variance < 1e-6  # Where values are low
-    variance[low_values_flags] = 0.0
+#     low_values_flags = variance < 1e-6  # Where values are low
+#     variance[low_values_flags] = 0.0
 
-    resampled_T = np.random.normal(T_mean.flatten(), variance[:8,:].T.flatten())
-    resampled_Q = np.random.normal(Q_mean.flatten(), variance[8:,:].T.flatten())
+#     resampled_T = np.random.normal(T_mean.flatten(), variance[:8,:].T.flatten())
+#     resampled_Q = np.random.normal(Q_mean.flatten(), variance[8:,:].T.flatten())
 
-    resampled_T = np.reshape(resampled_T.T, (nlon, nlat, nlev))
-    resampled_T  = np.flip(resampled_T, axis = 2)
-    resampled_Q = np.reshape(resampled_Q.T, (nlon, nlat, nlev))
-    resampled_Q  = np.flip(resampled_Q, axis = 2)
+#     resampled_T = np.reshape(resampled_T.T, (nlon, nlat, nlev))
+#     resampled_T  = np.flip(resampled_T, axis = 2)
+#     resampled_Q = np.reshape(resampled_Q.T, (nlon, nlat, nlev))
+#     resampled_Q  = np.flip(resampled_Q, axis = 2)
 
-    return resampled_T, resampled_Q
+#     return resampled_T, resampled_Q
 
 def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
-    
     variance, uncer, d = trained_gp.predict(test)
     print("Prediction")
-    # T_mean = test[:, 3:11]
-    # Q_mean = test[:, 11:]
-    T_mean = test[:, 4:12]
-    Q_mean = test[:, 12:]
+    if GP_name == "gp_without_oro_var":
+        T_mean = test[:, 3:11]
+        Q_mean = test[:, 11:]
+    elif GP_name == "gp_with_oro_var":
+        T_mean = test[:, 4:12]
+        Q_mean = test[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
@@ -219,6 +229,8 @@ def main():
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
+    if GP_name == "gp_with_oro_var":
+        np.append(oro, read_oro_var(), axis=0)
 
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
