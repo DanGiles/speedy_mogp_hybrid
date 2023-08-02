@@ -169,8 +169,7 @@ subroutine iogrid(imode)
                 end do
 
                 do j=1,ngp
-                  rrgr1(j) = save2d_d2(j,1)& ! g/m^2/s
-                      &*3.6*4.0/real(nsteps)*6.0 ! mm/6hr
+                  rrgr1(j) = save2d_d2(j,1)/real(nsteps) ! (averaged mm/day [kg/(m^2*day)])
                 end do
             end do
         else  ! sigma-level output
@@ -179,6 +178,9 @@ subroutine iogrid(imode)
             tgr1 = tgr
             qgr1 = qgr
             phigr1 = phigr
+            do j=1,ngp
+                rrgr1(j) = save2d_d2(j,1)/real(nsteps) ! (averaged mm/day)
+            end do
         end if
 
         ! Output
@@ -336,7 +338,7 @@ subroutine iogrid(imode)
           write (11,'(A)') 'Z 8 99 Geopotential Height [m]'
         end if
         write (11,'(A)') 'PS 0 99 Surface Pressure [Pa]'
-        write (11,'(A)') 'RAIN 0 99 Precipitation [mm/6hr]'
+        write (11,'(A)') 'RAIN 0 99 Precipitation [mm/day]'
         write (11,'(A)') 'ENDVARS'
         close (11)
     else if (imode.eq.6) then
