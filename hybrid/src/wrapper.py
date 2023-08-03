@@ -81,7 +81,7 @@ def read_const_grd(filename, nlon, nlat, var):
 
 def speedy_update(SPEEDY, output_folder, YMDH, TYMDH):
     # Path to the bash script which carries out the forecast
-    forecast = os.path.join(SPEEDY_fusion_root, "src", "dafcst.sh")
+    forecast = os.path.join(SPEEDY_hybrid_root, "src", "dafcst.sh")
     # Bash script call to speedy
     subprocess.check_call(str(forecast)+" %s %s %s %s" % (str(SPEEDY), str(output_folder), str(YMDH), str(TYMDH)),shell=True)
     return
@@ -198,7 +198,7 @@ def main():
 
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
-    nature_dir = os.path.join(SPEEDY_nature_root, "DATA", "nature")
+    nature_dir = os.path.join(SPEEDY_root, "DATA", "nature")
 
     IDate = "1982010100"
     dtDate = "1982010106"
@@ -209,16 +209,16 @@ def main():
     dt = 6
     
     # Initialisation steps
-    data_folder = os.path.join(SPEEDY_fusion_data_root, GP_name)
+    data_folder = os.path.join(Hybrid_data_root, GP_name)
     create_folders(data_folder)
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
 
     # Read in the orography and land/sea fraction
-    oro = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
-    lsm = read_const_grd(os.path.join(SPEEDY_nature_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
+    oro = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
+    lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
-    rho = np.loadtxt(os.path.join(SPEEDY_fusion_root, "src", "density.txt"))
+    rho = np.loadtxt(os.path.join(SPEEDY_hybrid_root, "src", "density.txt"))
 
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
@@ -246,7 +246,7 @@ def main():
         print("Done Writing")
 
         # # # Speedy integration forward
-        speedy_update(SPEEDY_nature_root, data_folder, IDate, dtDate)
+        speedy_update(SPEEDY_root, data_folder, IDate, dtDate)
 
         # # # Read Speedy output
         file = os.path.join(data_folder, (dtDate+".grd"))

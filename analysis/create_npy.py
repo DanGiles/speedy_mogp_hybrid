@@ -181,16 +181,16 @@ analysis_path = os.path.join(analysis_root, GP_name)
 if not os.path.isdir(analysis_path):
     os.mkdir(analysis_path)
 
-#################### NATURE ####################
-if NATURE:
-    print("Start NATURE")
+#################### SPEEDY ####################
+if SPEEDY:
+    print("Start SPEEDY")
     ################################
     ######## WINTER
 
     print("Start winter")
     # non-fluxes
     output = loop_through_grd(
-            os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
+            os.path.join(SPEEDY_root, "DATA", "nature"), 
             filenames_winter, 
             n_winter
         )
@@ -199,7 +199,7 @@ if NATURE:
 
     #fluxes
     output = loop_through_flx(
-            os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
+            os.path.join(SPEEDY_root, "DATA", "nature"), 
             filenames_winter, 
             n_winter
         )
@@ -212,7 +212,7 @@ if NATURE:
     print("Start summer")
     # non-fluxes
     output = loop_through_grd(
-            os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
+            os.path.join(SPEEDY_root, "DATA", "nature"), 
             filenames_summer, 
             n_summer
         )
@@ -221,7 +221,7 @@ if NATURE:
 
     # fluxes
     output = loop_through_flx(
-            os.path.join(SPEEDY_nature_root, "DATA", "nature"), 
+            os.path.join(SPEEDY_root, "DATA", "nature"), 
             filenames_summer, 
             n_summer
         )
@@ -231,10 +231,10 @@ if NATURE:
 
 
 
-#################### FUSION ####################
-if FUSION:
-    print("Start FUSION")
-    data_folder = os.path.join(SPEEDY_fusion_data_root, GP_name)
+#################### Hybrid ####################
+if HYBRID:
+    print("Start Hybrid")
+    data_folder = os.path.join(Hybrid_data_root, GP_name)
     ################################
     ######## WINTER
 
@@ -246,7 +246,7 @@ if FUSION:
             n_winter
         )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_DJF_fusion")
+        save_summaries(array, f"{varname}_DJF_hybrid")
 
     # fluxes
     output = loop_through_flx(
@@ -255,7 +255,7 @@ if FUSION:
             n_winter
         )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_DJF_fusion")
+        save_summaries(array, f"{varname}_DJF_hybrid")
     
     ################################
     ######## SUMMER
@@ -268,7 +268,7 @@ if FUSION:
             n_summer
         )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_JJA_fusion")
+        save_summaries(array, f"{varname}_JJA_hybrid")
 
     # fluxes
     output = loop_through_flx(
@@ -277,4 +277,4 @@ if FUSION:
             n_summer
         )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_JJA_fusion")
+        save_summaries(array, f"{varname}_JJA_hybrid")
