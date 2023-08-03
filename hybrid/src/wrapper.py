@@ -104,6 +104,7 @@ def step_datetime(idate, dtdate, SPEEDY_DATE_FORMAT, dt):
 
 def read_oro_var() -> np.ndarray:
     oro_var_data = np.zeros((96, 48))
+    oro_var_data_file = os.path.join(SPEEDY_nature_root, "model","data","bc","t30","clim", "std_orog_for_speedy.dat")
     with open(oro_var_data_file) as f:
         for row_i in range(96):
             oro_var_data[row_i, :] = np.fromstring(f.readline().strip(), dtype=float, sep=',')
