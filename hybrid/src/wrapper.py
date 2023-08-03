@@ -104,10 +104,9 @@ def step_datetime(idate, dtdate, SPEEDY_DATE_FORMAT, dt):
 
 def read_oro_var() -> np.ndarray:
     oro_var_data = np.zeros((96, 48))
-    row_i = 0
     with open(oro_var_data_file) as f:
-        oro_var_data[row_i, :] = np.fromstring(f.readline().strip(), dtype=float, sep=',')
-        row_i += 1
+        for row_i in range(96):
+            oro_var_data[row_i, :] = np.fromstring(f.readline().strip(), dtype=float, sep=',')
     return oro_var_data
 
 def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
@@ -130,7 +129,8 @@ def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
         # Version for gp_with_oro_var
         train = np.empty(((nlon*nlat),20), dtype = np.float64)
         train[:, 0] = data[:,:,32].flatten()
-        train[:, 1:3] = oro
+        train[:, 1] = oro[...,0].flatten()
+        train[:, 2] = oro[...,1].flatten() 
         train[:, 3] = ls.flatten()
         train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
         train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 8))
@@ -230,7 +230,7 @@ def main():
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
     if GP_name == "gp_with_oro_var":
-        np.append(oro, read_oro_var().flatten(), axis=1)
+        np.stack(oro, read_oro_var(), axis=2)
 
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
