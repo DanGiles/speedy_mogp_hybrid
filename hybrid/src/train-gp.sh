@@ -23,7 +23,7 @@
 #$ -wd /home/ucakjcb/Scratch/clouds
 
 # Your work should be done in $TMPDIR 
-cd /home/ucakjcb/ml_climate_fusion/speedy_fusion/src/
+cd /home/ucakjcb/ml_climate_fusion/hybrid/src/
 
 module load python3/recommended
 
@@ -31,4 +31,4 @@ source /home/ucakjcb/venvs/mogp061/bin/activate
 # source /home/ucakdpg/Scratch/mogp-speedy/mogp/bin/activate
 
 # Run the application and put the output into a file called date.txt
-python /home/ucakjcb/ml_climate_fusion/speedy_fusion/src/mogp.py
+python /home/ucakjcb/ml_climate_fusion/hybrid/src/mogp.py
