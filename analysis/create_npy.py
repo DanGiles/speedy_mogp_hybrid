@@ -7,6 +7,13 @@ from typing import Dict
 
 from script_variables import *
 
+def make_dir(path: str) -> None:
+    #do not empty directory if it doesn't exist!
+    if os.path.isdir(path):
+        import shutil
+        shutil.rmtree(path)
+    # make directory
+    os.mkdir(path)
 
 def read_grd(filename) -> np.ndarray:
     nv3d = 4
@@ -108,18 +115,18 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
         }
 
 # only save the field means and variances
-def save_summaries(array, filename) -> None:
+def save_summaries(array, name, filename) -> None:
     # calculate mean
     output_mean = np.mean(array, axis=-1)
     np.save(
-        os.path.join(analysis_root, GP_name, f"mean_{filename}.npy"),
+        os.path.join(analysis_root, name, f"mean_{filename}.npy"),
         output_mean
     )
 
     # calculate variance
     output_var = np.var(array, axis=-1)
     np.save(
-        os.path.join(analysis_root, GP_name, f"var_{filename}.npy"),
+        os.path.join(analysis_root, name, f"var_{filename}.npy"),
         output_var
     )
 
@@ -184,27 +191,28 @@ if not os.path.isdir(analysis_path):
 #################### SPEEDY ####################
 if SPEEDY:
     print("Start SPEEDY")
+    make_dir(os.path.join(analysis_root, 'SPEEDY'))
     ################################
     ######## WINTER
 
     print("Start winter")
     # non-fluxes
     output = loop_through_grd(
-            os.path.join(SPEEDY_root, "DATA", "nature"), 
-            filenames_winter, 
-            n_winter
-        )
+        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        filenames_winter, 
+        n_winter
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_DJF_nature")
+        save_summaries(array, 'SPEEDY', f"{varname}_DJF")
 
     #fluxes
     output = loop_through_flx(
-            os.path.join(SPEEDY_root, "DATA", "nature"), 
-            filenames_winter, 
-            n_winter
-        )
+        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        filenames_winter, 
+        n_winter
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_DJF_nature")
+        save_summaries(array, 'SPEEDY', f"{varname}_DJF")
     
     ################################
     ######## SUMMER
@@ -212,21 +220,21 @@ if SPEEDY:
     print("Start summer")
     # non-fluxes
     output = loop_through_grd(
-            os.path.join(SPEEDY_root, "DATA", "nature"), 
-            filenames_summer, 
-            n_summer
-        )
+        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        filenames_summer, 
+        n_summer
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_JJA_nature")
+        save_summaries(array, 'SPEEDY', f"{varname}_JJA")
 
     # fluxes
     output = loop_through_flx(
-            os.path.join(SPEEDY_root, "DATA", "nature"), 
-            filenames_summer, 
-            n_summer
-        )
+        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        filenames_summer, 
+        n_summer
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_JJA_nature")
+        save_summaries(array, 'SPEEDY', f"{varname}_JJA")
 
 
 
@@ -234,6 +242,7 @@ if SPEEDY:
 #################### Hybrid ####################
 if HYBRID:
     print("Start Hybrid")
+    make_dir(os.path.join(analysis_root, GP_name))
     data_folder = os.path.join(HYBRID_data_root, GP_name)
     ################################
     ######## WINTER
@@ -241,21 +250,21 @@ if HYBRID:
     print("Start winter")
     # non-fluxes
     output = loop_through_grd(
-            data_folder, 
-            filenames_winter, 
-            n_winter
-        )
+        data_folder, 
+        filenames_winter, 
+        n_winter
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_DJF_hybrid")
+        save_summaries(array, GP_name, f"{varname}_DJF_hybrid")
 
     # fluxes
     output = loop_through_flx(
-            data_folder, 
-            filenames_winter, 
-            n_winter
-        )
+        data_folder, 
+        filenames_winter, 
+        n_winter
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_DJF_hybrid")
+        save_summaries(array, GP_name, f"{varname}_DJF_hybrid")
     
     ################################
     ######## SUMMER
@@ -263,18 +272,18 @@ if HYBRID:
     print("Start summer")
     # non-fluxes
     output = loop_through_grd(
-            data_folder, 
-            filenames_summer, 
-            n_summer
-        )
+        data_folder, 
+        filenames_summer, 
+        n_summer
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_JJA_hybrid")
+        save_summaries(array, GP_name, f"{varname}_JJA_hybrid")
 
     # fluxes
     output = loop_through_flx(
-            data_folder, 
-            filenames_summer, 
-            n_summer
-        )
+        data_folder, 
+        filenames_summer, 
+        n_summer
+    )
     for varname, array in output.items():
-        save_summaries(array, f"{varname}_JJA_hybrid")
+        save_summaries(array, GP_name, f"{varname}_JJA_hybrid")
