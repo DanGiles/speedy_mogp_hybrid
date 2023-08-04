@@ -234,7 +234,7 @@ if SPEEDY:
 #################### Hybrid ####################
 if HYBRID:
     print("Start Hybrid")
-    data_folder = os.path.join(Hybrid_data_root, GP_name)
+    data_folder = os.path.join(HYBRID_data_root, GP_name)
     ################################
     ######## WINTER
 

@@ -7,7 +7,7 @@ GP_name = '' # Do NOT include the .pkl file extention
 #Different for each user
 analysis_root =         '' #Path to analysis .npy files after running SPEEDY
 
-Hybrid_data_root = '' #Location .grd files from GP predictions ready for SPEEDY hybrid simulation
+HYBRID_data_root = '' #Location .grd files from GP predictions ready for SPEEDY hybrid simulation
 SPEEDY_root =    '' #Path to speedy directory
 
 # Flags
