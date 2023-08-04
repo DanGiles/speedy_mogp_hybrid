@@ -10,7 +10,7 @@ pngs_root =             '' #Path to where the pngs will be saved to
 gp_directory_root =     '' #Path to your gp.pkl files
 analysis_root =         '' #Path to analysis .npy files after running SPEEDY
 
-HYBRID_root =    '' #Path to speedy_fusion directory
+HYBRID_root =    '' #Path to hybrid directory
 HYBRID_data_root = '' #Location .grd files from GP predictions ready for SPEEDY hybrid simulation
 SPEEDY_root =    '' #Path to speedy directory
 
