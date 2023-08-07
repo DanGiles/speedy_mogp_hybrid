@@ -255,7 +255,7 @@ if HYBRID:
         n_winter
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_DJF_hybrid")
+        save_summaries(array, GP_name, f"{varname}_DJF")
 
     # fluxes
     output = loop_through_flx(
@@ -264,7 +264,7 @@ if HYBRID:
         n_winter
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_DJF_hybrid")
+        save_summaries(array, GP_name, f"{varname}_DJF")
     
     ################################
     ######## SUMMER
@@ -277,7 +277,7 @@ if HYBRID:
         n_summer
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_JJA_hybrid")
+        save_summaries(array, GP_name, f"{varname}_JJA")
 
     # fluxes
     output = loop_through_flx(
@@ -286,4 +286,4 @@ if HYBRID:
         n_summer
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_JJA_hybrid")
+        save_summaries(array, GP_name, f"{varname}_JJA")
