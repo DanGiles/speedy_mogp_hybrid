@@ -231,7 +231,7 @@ def main():
     lsm = np.flip(lsm, 1)
     rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
     if GP_name == "gp_with_oro_var":
-        np.stack((oro, read_oro_var()), axis=2)
+        oro = np.stack((oro, read_oro_var()), axis=2)
 
     # Output Array
     output_precip = np.zeros((nlon, nlat, number_time_steps))
