@@ -12,7 +12,7 @@
 #$ -l tmpfs=20G
 
 # Set the name of the job.
-#$ -N speedy
+#$ -N train-gp
 
 # Request 32 cores.
 #$ -pe smp 2

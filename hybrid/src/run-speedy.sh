@@ -12,7 +12,7 @@
 #$ -l tmpfs=20G
 
 # Set the name of the job.
-#$ -N speedy
+#$ -N speedy-hybrid
 
 # Request 32 cores.
 #$ -pe smp 36
