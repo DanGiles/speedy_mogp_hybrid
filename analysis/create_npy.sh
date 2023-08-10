@@ -3,7 +3,7 @@
 # Batch script to run a serial job under SGE.
 
 # Request 12 hours of wallclock time (format hours:minutes:seconds).
-#$ -l h_rt=12:00:00
+#$ -l h_rt=18:00:00
 
 # Request 1 gigabyte of RAM (must be an integer followed by M, G, or T)
 #$ -l mem=10G
@@ -12,7 +12,7 @@
 #$ -l tmpfs=1G
 
 # Set the name of the job.
-#$ -N mogp-analysis
+#$ -N create-npy
 
 # Request 4 cores.
 #$ -pe smp 4
