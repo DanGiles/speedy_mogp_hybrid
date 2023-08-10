@@ -130,6 +130,16 @@ def save_summaries(array, name, filename) -> None:
         output_var
     )
 
+    # save Indian continent & indian sea points
+    lon_index = [17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24]
+    lat_index = [28,28,28,28,28,28,28,28,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26]
+    output_india = array[lon_index, lat_index, ...]
+    np.save(
+        os.path.join(analysis_root, name, f"india_{filename}.npy"),
+        output_india
+    )
+
+
 
 
 
