@@ -6,10 +6,10 @@
 #$ -l h_rt=18:00:00
 
 # Request 1 gigabyte of RAM (must be an integer followed by M, G, or T)
-#$ -l mem=10G
+#$ -l mem=16G
 
 # Request 15 gigabyte of TMPDIR space (default is 10 GB - remove if cluster is diskless)
-#$ -l tmpfs=1G
+#$ -l tmpfs=15G
 
 # Set the name of the job.
 #$ -N create-npy
