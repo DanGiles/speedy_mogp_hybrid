@@ -23,7 +23,7 @@
 #$ -wd /home/ucakjcb/Scratch/clouds
 
 # Your work should be done in $TMPDIR 
-cd /home/ucakjcb/ml_climate_fusion/hybrid/src/
+cd /home/ucakjcb/ml_climate_fusion/analysis
 
 module load python3/recommended
 
