@@ -150,7 +150,7 @@ def save_summaries(array, name, filename) -> None:
 nlon = 96
 nlat = 48
 nlev = 8
-nrec = 6
+nrec = 10
 
 # Prepare the December, Janurary and February data
 winter = ["12", "01", "02"]
