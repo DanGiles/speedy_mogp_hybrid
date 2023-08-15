@@ -193,11 +193,6 @@ n_summer = len(filenames_summer)
 if not os.path.isdir(analysis_root):
     os.mkdir(analysis_root)
 
-# if GP_name directory does not exist, make the directory
-analysis_path = os.path.join(analysis_root, GP_name)
-if not os.path.isdir(analysis_path):
-    os.mkdir(analysis_path)
-
 #################### SPEEDY ####################
 if SPEEDY:
     print("Start SPEEDY")
