@@ -61,7 +61,8 @@ def loop_through_grd(folder, filenames, n) -> Dict[str, np.ndarray]:
 
 def read_flx(filename) -> np.ndarray:
     f = np.fromfile(filename, dtype=np.float64)
-    shape = (nlon, nlat, nrec)
+    # shape = (nlon, nlat, nrec)
+    shape = (nlon, nlat, -1)
     data = np.reshape(f, shape, order="F")
     # data = data.astype(np.float64)
     return data
@@ -74,10 +75,10 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
     tsr     = np.zeros_like(cloudc)
     olr     = np.zeros_like(cloudc)
 
-    sprecnv = np.zeros_like(cloudc)
-    sprecls = np.zeros_like(cloudc)
-    stsr    = np.zeros_like(cloudc)
-    solr    = np.zeros_like(cloudc)
+    # sprecnv = np.zeros_like(cloudc)
+    # sprecls = np.zeros_like(cloudc)
+    # stsr    = np.zeros_like(cloudc)
+    # solr    = np.zeros_like(cloudc)
 
     i = 0
     for date in filenames:
@@ -94,10 +95,10 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
                 tsr[..., i]     = data[..., 4]
                 olr[..., i]     = data[..., 5]
 
-                sprecnv[..., i] = data[..., 6]
-                sprecls[..., i] = data[..., 7]
-                stsr[..., i]    = data[..., 8]
-                solr[..., i]    = data[..., 9]
+                # sprecnv[..., i] = data[..., 6]
+                # sprecls[..., i] = data[..., 7]
+                # stsr[..., i]    = data[..., 8]
+                # solr[..., i]    = data[..., 9]
 
                 i += 1
 
@@ -108,10 +109,10 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
             'precls': precls,
             'tsr': tsr,
             'olr': olr,
-            'sprecnv': sprecnv,
-            'sprecls': sprecls,
-            'stsr': stsr,
-            'solr': solr,
+            # 'sprecnv': sprecnv,
+            # 'sprecls': sprecls,
+            # 'stsr': stsr,
+            # 'solr': solr,
         }
 
 # only save the field means and variances
@@ -131,12 +132,21 @@ def save_summaries(array, name, filename) -> None:
     )
 
     # save Indian continent & indian sea points
-    lon_index = [17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24]
-    lat_index = [28,28,28,28,28,28,28,28,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26]
-    output_india = array[lon_index, lat_index, ...]
+    lon_index_india = [17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24]
+    lat_index_india = [28,28,28,28,28,28,28,28,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26]
+    output_india = array[lon_index_india, lat_index_india, ...]
     np.save(
         os.path.join(analysis_root, name, f"india_{filename}.npy"),
         output_india
+    )
+
+    # save African continent points
+    lon_index_africa = [i-14 for i in lon_index_india]
+    lat_index_africa = [i-4 for i in lat_index_india]
+    output_africa = array[lon_index_africa, lat_index_africa, ...]
+    np.save(
+        os.path.join(analysis_root, name, f"africa_{filename}.npy"),
+        output_africa
     )
 
 
