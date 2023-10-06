@@ -8,7 +8,6 @@ GP_name = 'gp_without_oro_var' # Do NOT include the .pkl file extention
 processed_data_root =   '' #Path to your .npy files from data_prep routine
 pngs_root =             '' #Path to where the pngs will be saved to
 gp_directory_root =     '' #Path to your gp.pkl files
-analysis_root =         '' #Path to analysis .npy files after running SPEEDY
 
 oro_var_data_file = '' #Path to orography variance data file
 
