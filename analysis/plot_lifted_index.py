@@ -1,15 +1,14 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from metpy.calc import dewpoint_from_specific_humidity
-from metpy.calc import parcel_profile
-from metpy.calc import lifted_index
-from metpy.units import units
+import cartopy.crs as ccrs
+import matplotlib as mpl
+import cartopy.feature as cfeature
 
 from script_variables import *
 
-# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
-# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs' #override for local compute, otherwise comment out
+analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
+pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs' #override for local compute, otherwise comment out
 
 level_925 = 0
 level_850 = 1
@@ -26,67 +25,69 @@ if not os.path.isdir(output_path):
 seasons = ['DJF', 'JJA']
 locations = ['africa', 'india']
 
-# pressure_levels = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500] # *units.Pa
+nlon = 96
+nlat = 48
+nlev = 8
 
+lon = np.linspace(-180, 180, nlon)
+lat = np.linspace(-90, 90, nlat)
+lon_grid, lat_grid = np.meshgrid(lon, lat)
 
-def get_LI(t, q, location) -> np.ndarray:
-    """Calculates and returns the array of lifted index values"""
-
-    #### Find entries the q values are non-negative
-    id_q_500_pos = q[location, level_500, :] >= 0
-    id_q_700_pos = q[location, level_700, :] >= 0
-    id_q_850_pos = q[location, level_850, :] >= 0
-    id_q_925_pos = q[location, level_925, :] >= 0
-    id_q_pos = id_q_500_pos & id_q_700_pos & id_q_850_pos & id_q_925_pos
-
-    LI = np.zeros((sum(id_q_pos)))
-    j=0
-    for i in range(len(id_q_pos)):
-        if id_q_pos[i] is np.True_:
-            #### DEWPOINT
-            dewpoint = dewpoint_from_specific_humidity(
-                925*units.hPa,
-                t[location, level_925, i]*units.kelvin,
-                q[location, level_925, i]*units('kg/kg')
-            )
-            # print(dewpoint) #A single value with units Celsius
-
-            #### PARCEL PROFILE
-            parcel_prof = np.array(parcel_profile(
-                [925, 850, 700, 500]*units.hPa,
-                t[location, level_925, i]*units.kelvin,
-                dewpoint
-            ))
-            # print(parcel_prof[0]) #Array of 4 values with units, but in Kelvin scale
-
-            #### LIFTED INDEX
-            LI[j] = np.array(lifted_index(
-                [925, 850, 700, 500]*units.hPa,
-                t[location, [level_925, level_850, level_700, level_500], i]*units.kelvin,
-                parcel_prof*units.kelvin
-            )[0])
-            j += 1
-    return LI
+lon_index_india = [17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24]
+lat_index_india = [28,28,28,28,28,28,28,28,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26]
+lon_index_africa = [i-14 for i in lon_index_india]
+lat_index_africa = [i-4 for i in lat_index_india]
 
 
 def round_nearest_half(x):
     return round(x * 2.0)/2
 
-for location in locations:
-    for season in seasons:
-        ############### SPEEDY ###############
-        #### LOAD DATA
-        t_speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
-        q_speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
 
-        ############### HYBRID ###############
-        #### LOAD DATA
-        t_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
-        q_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
+def plot_scatter(ax, lon_index, lat_index, field_data, title, divnorm, heatmap=None):
+    ax.set_extent(
+        [min(lon[lon_index]+180)-10, 
+         max(lon[lon_index]+180)+10, 
+         max(lat[lat_index])+10, 
+         min(lat[lat_index])-10], 
+        crs=ccrs.PlateCarree()
+    )
+    ax.coastlines()
+    ax.add_feature(cfeature.BORDERS)
+    # ax.add_feature(cfeature.RIVERS)
+    ax.add_feature(cfeature.OCEAN)
+    heatmap = ax.scatter(
+        lon[lon_index]+180, 
+        lat[lat_index], 
+        c=field_data,
+        s=400,
+        edgecolors='k',
+        cmap='PiYG',
+        norm=divnorm
+    )
+    ax.set_title(title)
+    return heatmap
+
+
+for season in seasons:
+    print(season)
+    counted_LI_m2 = {}
+    # counted_LI_p2 = {}
+    for location_i, location in enumerate(locations):
+        print(location)
+
+        speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"{location}_lifted_index_{season}.npy"))
+        hybrid = np.load(os.path.join(analysis_root, GP_name, f"{location}_lifted_index_{season}.npy"))
+
+        # save the lifted index counts for <-2 and >2.
+        counted_LI_m2[location] = np.zeros((24), dtype=int)
+        # counted_LI_p2[location] = np.zeros((24), dtype=int)
 
         for point in range(24):
-            LI_SPEEDY = get_LI(t_speedy, q_speedy, point)
-            LI_HYBRID = get_LI(t_hybrid, q_hybrid, point)
+            LI_SPEEDY = speedy[point, :]
+            LI_HYBRID = hybrid[point, :]
+
+            counted_LI_m2[location][point] = np.sum(LI_HYBRID <= -2) - np.sum(LI_SPEEDY <= -2)
+            # counted_LI_p2[location][point] = np.sum(LI_HYBRID >= 2) - np.sum(LI_SPEEDY >= 2)
 
             bin_min = round_nearest_half(min(np.min(LI_SPEEDY), np.min(LI_HYBRID)))
             bin_max = round_nearest_half(max(np.max(LI_SPEEDY), np.max(LI_HYBRID)))
@@ -114,3 +115,40 @@ for location in locations:
                 os.path.join(output_path, f'{location}_{point+1}_{season}_lifted_index.png')
             )
             plt.close()
+        
+
+    fig, ax = plt.subplots(
+        2, 1, 
+        figsize=(8, 8),
+        subplot_kw={'projection': ccrs.PlateCarree()}
+    )
+
+    vmin=min(min(counted_LI_m2['india']), min(counted_LI_m2['africa']))
+    vmax=max(max(counted_LI_m2['india']), max(counted_LI_m2['africa']))
+    divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    heatmap = plot_scatter(
+        ax[0],
+        lon_index_india,
+        lat_index_india,
+        counted_LI_m2['india'],
+        "India",
+        divnorm
+    )
+    heatmap = plot_scatter(
+        ax[1],
+        lon_index_africa,
+        lat_index_africa,
+        counted_LI_m2['africa'],
+        "Africa",
+        divnorm,
+        heatmap=heatmap
+    )
+
+    fig.colorbar(heatmap, ax=ax)
+    fig.suptitle(f'Difference in No. of Lifted Index values < -2 \n (Hybrid - SPEEDY); Season: {season}')
+
+    plt.savefig(
+        os.path.join(output_path, f'lifted_index_scatter_{season}.png')
+    )
+    plt.close()
