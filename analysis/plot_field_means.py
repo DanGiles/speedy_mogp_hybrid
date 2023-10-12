@@ -62,8 +62,12 @@ for season in seasons:
                     subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)}
                 )
 
-                heatmap = plot_map(axes[0], speedy[..., i].T, 'SPEEDY')
-                heatmap = plot_map(axes[1], hybrid[..., i].T, 'Hybrid', heatmap)
+                kwargs_contourf = {}
+                kwargs_contourf['vmin'] = min(np.min(speedy[..., i]), np.min(hybrid[..., i]))
+                kwargs_contourf['vmax'] = max(np.max(speedy[..., i]), np.max(hybrid[..., i]))
+
+                heatmap = plot_map(axes[0], speedy[..., i].T, 'SPEEDY', **kwargs_contourf)
+                heatmap = plot_map(axes[1], hybrid[..., i].T, 'Hybrid', heatmap, **kwargs_contourf)
 
                 fig.colorbar(heatmap, ax=axes)
                 fig.suptitle(f'{info[0]} [{info[1]}] - field mean in {season} - model level {i+1}')
@@ -82,6 +86,9 @@ for season in seasons:
 
             kwargs_colorbar = {}
             kwargs_contourf = {}
+
+            kwargs_contourf['vmin'] = min(np.min(speedy), np.min(hybrid))
+            kwargs_contourf['vmax'] = max(np.max(speedy), np.max(hybrid))
             if info[1] == 'fraction':
                 kwargs_colorbar['ticks'] = [0, 0.2, 0.4, 0.6, 0.8, 1]
                 kwargs_contourf['levels'] = np.linspace(0, 1, 10, endpoint=True)
