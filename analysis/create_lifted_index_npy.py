@@ -73,7 +73,7 @@ for season in seasons:
         #### LOAD DATA
         if SPEEDY:
             print("SPEEDY")
-            output_array = np.zeros((24, season_dump_counts[season]), dtype=int) + 9999
+            output_array = np.zeros((24, season_dump_counts[season])) + 9999
 
             t_speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
             q_speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
@@ -92,7 +92,7 @@ for season in seasons:
         ############### HYBRID ###############
         #### LOAD DATA
         print(GP_name)
-        output_array = np.zeros((24, season_dump_counts[season]), dtype=int) + 9999
+        output_array = np.zeros((24, season_dump_counts[season])) + 9999
 
         t_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
         q_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
