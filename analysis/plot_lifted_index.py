@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from scipy.stats import skew, kurtosis
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import matplotlib as mpl
@@ -86,6 +87,15 @@ for season in seasons:
             LI_SPEEDY = speedy[point, :]
             LI_HYBRID = hybrid[point, :]
 
+            # Count and print the number of missing points. Recall default value was set to 9999
+            if np.max(LI_SPEEDY)>9000:
+                # print(f'{season} - {location}, point {point+1} - SPEEDY: {np.sum(LI_SPEEDY>9000)}')
+                LI_SPEEDY = LI_SPEEDY[LI_SPEEDY < 9000]
+            
+            if np.max(LI_HYBRID)>9000:
+                # print(f'{season} - {location}, point {point+1} - Hybrid: {np.sum(LI_HYBRID>9000)}')
+                LI_HYBRID = LI_HYBRID[LI_HYBRID < 9000]
+
             counted_LI_m2[location][point] = np.sum(LI_HYBRID <= -2) - np.sum(LI_SPEEDY <= -2)
             # counted_LI_p2[location][point] = np.sum(LI_HYBRID >= 2) - np.sum(LI_SPEEDY >= 2)
 
@@ -108,7 +118,13 @@ for season in seasons:
             ax.vlines(np.mean(LI_SPEEDY), 0, y, colors='tab:blue', linestyles='dashed')
             ax.vlines(np.mean(LI_HYBRID), 0, y, colors='tab:orange', linestyles='dashed')
 
-            ax.set_title(f'SPEEDY - mean: {np.mean(LI_SPEEDY):.3f}; var: {np.var(LI_SPEEDY):.3f} \n HYBRID - mean: {np.mean(LI_HYBRID):.3f}; var: {np.var(LI_HYBRID):.3f}')
+            u = [np.mean(LI_SPEEDY), np.var(LI_SPEEDY), skew(LI_SPEEDY), kurtosis(LI_SPEEDY)]
+            v = [np.mean(LI_HYBRID), np.var(LI_HYBRID), skew(LI_HYBRID), kurtosis(LI_HYBRID)]
+
+            part1 = f'SPEEDY - mean: {u[0]:.3f}; var: {u[1]:.3f}; skew: {u[2]:.3f}; kurt: {u[3]:.3f}'
+            part2 = f'HYBRID - mean: {v[0]:.3f}; var: {v[1]:.3f}; skew: {v[2]:.3f}; kurt: {v[3]:.3f}'
+
+            ax.set_title(f'{part1} \n {part2}')
             ax.legend()
             
             plt.savefig(
