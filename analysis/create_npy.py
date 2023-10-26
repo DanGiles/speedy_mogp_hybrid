@@ -3,7 +3,7 @@
 import os
 import numpy as np
 from datetime import datetime, date, timedelta
-from typing import Dict
+from typing import Dict, List
 
 from script_variables import *
 
@@ -115,6 +115,19 @@ def loop_through_flx(folder, filenames, n) -> Dict[str, np.ndarray]:
             # 'solr': solr,
         }
 
+
+def get_index_mesh(lon_index_points: List[int], lat_index_points: List[int]):
+    n1 = len(lon_index_points)
+    n2 = len(lat_index_points)
+
+    lon_index = lon_index_points*n2
+
+    lat_index = []
+    [lat_index.extend([index]*n1) for index in lat_index_points]
+
+    return lon_index, lat_index
+
+
 # only save the field means and variances
 def save_summaries(array, name, filename) -> None:
     # calculate mean
@@ -132,8 +145,14 @@ def save_summaries(array, name, filename) -> None:
     )
 
     # save Indian continent & indian sea points
-    lon_index_india = [17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24]
-    lat_index_india = [28,28,28,28,28,28,28,28,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26]
+    lon_index_india_points = [17,18,19,20,21,22,23,24]
+    lat_index_india_points = [28,27,26]
+
+    lon_index_india, lat_index_india = get_index_mesh(
+        lon_index_india_points,
+        lat_index_india_points
+    )
+
     output_india = array[lon_index_india, lat_index_india, ...]
     np.save(
         os.path.join(analysis_root, name, f"india_{filename}.npy"),
@@ -141,8 +160,13 @@ def save_summaries(array, name, filename) -> None:
     )
 
     # save African continent points
-    lon_index_africa = [i-14 for i in lon_index_india]
-    lat_index_africa = [i-4 for i in lat_index_india]
+    lon_index_africa_points = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+    lat_index_africa_points = [24,23,22]
+
+    lon_index_africa, lat_index_africa = get_index_mesh(
+        lon_index_africa_points,
+        lat_index_africa_points
+    )
     output_africa = array[lon_index_africa, lat_index_africa, ...]
     np.save(
         os.path.join(analysis_root, name, f"africa_{filename}.npy"),
