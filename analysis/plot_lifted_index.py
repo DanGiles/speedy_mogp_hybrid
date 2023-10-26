@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import matplotlib as mpl
 import cartopy.feature as cfeature
+from typing import List
 
 from script_variables import *
 
@@ -34,10 +35,34 @@ lon = np.linspace(-180, 180, nlon)
 lat = np.linspace(-90, 90, nlat)
 lon_grid, lat_grid = np.meshgrid(lon, lat)
 
-lon_index_india = [17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24,17,18,19,20,21,22,23,24]
-lat_index_india = [28,28,28,28,28,28,28,28,27,27,27,27,27,27,27,27,26,26,26,26,26,26,26,26]
-lon_index_africa = [i-14 for i in lon_index_india]
-lat_index_africa = [i-4 for i in lat_index_india]
+def get_index_mesh(lon_index_points: List[int], lat_index_points: List[int]):
+    n1 = len(lon_index_points)
+    n2 = len(lat_index_points)
+
+    lon_index = lon_index_points*n2
+
+    lat_index = []
+    [lat_index.extend([index]*n1) for index in lat_index_points]
+
+    return lon_index, lat_index, n1*n2
+
+n_points = {}
+
+lon_index_india_points = [17,18,19,20,21,22,23,24]
+lat_index_india_points = [28,27,26]
+
+lon_index_india, lat_index_india, n_points['india'] = get_index_mesh(
+    lon_index_india_points,
+    lat_index_india_points
+)
+
+lon_index_africa_points = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+lat_index_africa_points = [24,23,22]
+
+lon_index_africa, lat_index_africa, n_points['africa'] = get_index_mesh(
+    lon_index_africa_points,
+    lat_index_africa_points
+)
 
 
 def round_nearest_half(x):
@@ -80,10 +105,10 @@ for season in seasons:
         hybrid = np.load(os.path.join(analysis_root, GP_name, f"{location}_lifted_index_{season}.npy"))
 
         # save the lifted index counts for <-2 and >2.
-        counted_LI_m2[location] = np.zeros((24), dtype=int)
-        # counted_LI_p2[location] = np.zeros((24), dtype=int)
+        counted_LI_m2[location] = np.zeros((n_points[location]), dtype=int)
+        # counted_LI_p2[location] = np.zeros((n_points[location]), dtype=int)
 
-        for point in range(24):
+        for point in range(n_points[location]):
             LI_SPEEDY = speedy[point, :]
             LI_HYBRID = hybrid[point, :]
 
