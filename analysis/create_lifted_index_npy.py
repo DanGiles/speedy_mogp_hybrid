@@ -73,12 +73,14 @@ for season in seasons:
         #### LOAD DATA
         if SPEEDY:
             print("SPEEDY")
-            output_array = np.zeros((24, season_dump_counts[season])) + 9999
 
             t_speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
             q_speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
 
-            for point in range(24):
+            n = q_speedy.shape[0]
+            output_array = np.zeros((n, season_dump_counts[season])) + 9999
+
+            for point in range(n):
                 print(point)
                 LI_SPEEDY = get_LI(t_speedy, q_speedy, point)
                 output_array[point, 0:len(LI_SPEEDY)] = LI_SPEEDY
@@ -92,12 +94,14 @@ for season in seasons:
         ############### HYBRID ###############
         #### LOAD DATA
         print(GP_name)
-        output_array = np.zeros((24, season_dump_counts[season])) + 9999
 
         t_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
         q_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
 
-        for point in range(24):
+        n = q_hybrid.shape[0]
+        output_array = np.zeros((n, season_dump_counts[season])) + 9999
+
+        for point in range(n):
             print(point)
             LI_HYBRID = get_LI(t_hybrid, q_hybrid, point)
             output_array[point, 0:len(LI_HYBRID)] = LI_HYBRID
