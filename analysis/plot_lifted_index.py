@@ -97,6 +97,8 @@ def plot_scatter(ax, lon_index, lat_index, field_data, title, divnorm, heatmap=N
 for season in seasons:
     print(season)
     counted_LI_m2 = {}
+    counted_LI_m4 = {}
+    counted_LI_m6 = {}
     # counted_LI_p2 = {}
     for location_i, location in enumerate(locations):
         print(location)
@@ -106,6 +108,8 @@ for season in seasons:
 
         # save the lifted index counts for <-2 and >2.
         counted_LI_m2[location] = np.zeros((n_points[location]), dtype=int)
+        counted_LI_m4[location] = np.zeros((n_points[location]), dtype=int)
+        counted_LI_m6[location] = np.zeros((n_points[location]), dtype=int)
         # counted_LI_p2[location] = np.zeros((n_points[location]), dtype=int)
 
         for point in range(n_points[location]):
@@ -122,6 +126,8 @@ for season in seasons:
                 LI_HYBRID = LI_HYBRID[LI_HYBRID < 9000]
 
             counted_LI_m2[location][point] = np.sum(LI_HYBRID <= -2) - np.sum(LI_SPEEDY <= -2)
+            counted_LI_m4[location][point] = np.sum(LI_HYBRID <= -4) - np.sum(LI_SPEEDY <= -4)
+            counted_LI_m6[location][point] = np.sum(LI_HYBRID <= -6) - np.sum(LI_SPEEDY <= -6)
             # counted_LI_p2[location][point] = np.sum(LI_HYBRID >= 2) - np.sum(LI_SPEEDY >= 2)
 
             bin_min = round_nearest_half(min(np.min(LI_SPEEDY), np.min(LI_HYBRID)))
@@ -158,6 +164,7 @@ for season in seasons:
             plt.close()
         
 
+    # MINUS 2
     fig, ax = plt.subplots(
         2, 1, 
         figsize=(8, 8),
@@ -190,6 +197,84 @@ for season in seasons:
     fig.suptitle(f'Difference in No. of Lifted Index values < -2 \n (Hybrid - SPEEDY); Season: {season}')
 
     plt.savefig(
-        os.path.join(output_path, f'lifted_index_scatter_{season}.png')
+        os.path.join(output_path, f'lifted_index_scatter_{season}_-2.png')
+    )
+    plt.close()
+
+
+
+    # MINUS 4
+    fig, ax = plt.subplots(
+        2, 1, 
+        figsize=(8, 8),
+        subplot_kw={'projection': ccrs.PlateCarree()}
+    )
+
+    vmin=min(min(counted_LI_m4['india']), min(counted_LI_m4['africa']))
+    vmax=max(max(counted_LI_m4['india']), max(counted_LI_m4['africa']))
+    divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    heatmap = plot_scatter(
+        ax[0],
+        lon_index_india,
+        lat_index_india,
+        counted_LI_m4['india'],
+        "India",
+        divnorm
+    )
+    heatmap = plot_scatter(
+        ax[1],
+        lon_index_africa,
+        lat_index_africa,
+        counted_LI_m4['africa'],
+        "Africa",
+        divnorm,
+        heatmap=heatmap
+    )
+
+    fig.colorbar(heatmap, ax=ax)
+    fig.suptitle(f'Difference in No. of Lifted Index values < -4 \n (Hybrid - SPEEDY); Season: {season}')
+
+    plt.savefig(
+        os.path.join(output_path, f'lifted_index_scatter_{season}_-4.png')
+    )
+    plt.close()
+
+
+
+    # MINUS 6
+    fig, ax = plt.subplots(
+        2, 1, 
+        figsize=(8, 8),
+        subplot_kw={'projection': ccrs.PlateCarree()}
+    )
+
+    vmin=min(min(counted_LI_m6['india']), min(counted_LI_m6['africa']))
+    vmax=max(max(counted_LI_m6['india']), max(counted_LI_m6['africa']))
+    divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    heatmap = plot_scatter(
+        ax[0],
+        lon_index_india,
+        lat_index_india,
+        counted_LI_m6['india'],
+        "India",
+        divnorm
+    )
+    heatmap = plot_scatter(
+        ax[1],
+        lon_index_africa,
+        lat_index_africa,
+        counted_LI_m6['africa'],
+        "Africa",
+        divnorm,
+        heatmap=heatmap
+    )
+
+    fig.colorbar(heatmap, ax=ax)
+    fig.suptitle(f'Difference in No. of Lifted Index values < -6 \n (Hybrid - SPEEDY); Season: {season}')
+
+    plt.savefig(
+        os.path.join(output_path, f'lifted_index_scatter_{season}_-6.png')
     )
     plt.close()
