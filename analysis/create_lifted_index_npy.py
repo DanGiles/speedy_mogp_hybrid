@@ -93,20 +93,21 @@ for season in seasons:
 
         ############### HYBRID ###############
         #### LOAD DATA
-        print(GP_name)
+        if HYBRID:
+            print(GP_name)
 
-        t_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
-        q_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
+            t_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_t_{season}.npy'))    # temperature (Kelvin) - (24, 8, 3608)
+            q_hybrid = np.load(os.path.join(analysis_root, GP_name, f'{location}_q_{season}.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
 
-        n = q_hybrid.shape[0]
-        output_array = np.zeros((n, season_dump_counts[season])) + 9999
+            n = q_hybrid.shape[0]
+            output_array = np.zeros((n, season_dump_counts[season])) + 9999
 
-        for point in range(n):
-            print(point)
-            LI_HYBRID = get_LI(t_hybrid, q_hybrid, point)
-            output_array[point, 0:len(LI_HYBRID)] = LI_HYBRID
+            for point in range(n):
+                print(point)
+                LI_HYBRID = get_LI(t_hybrid, q_hybrid, point)
+                output_array[point, 0:len(LI_HYBRID)] = LI_HYBRID
 
-        np.save(
-            os.path.join(analysis_root, GP_name, f'{location}_lifted_index_{season}.npy'),
-            output_array
-        )
+            np.save(
+                os.path.join(analysis_root, GP_name, f'{location}_lifted_index_{season}.npy'),
+                output_array
+            )
