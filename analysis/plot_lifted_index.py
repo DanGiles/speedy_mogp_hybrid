@@ -90,6 +90,7 @@ def plot_scatter(ax, lon_index, lat_index, field_data, title, divnorm, heatmap=N
         cmap='PiYG',
         norm=divnorm
     )
+    ax.set_aspect('auto')
     ax.set_title(title)
     return heatmap
 
@@ -171,8 +172,8 @@ for season in seasons:
         subplot_kw={'projection': ccrs.PlateCarree()}
     )
 
-    vmin=min(min(counted_LI_m2['india']), min(counted_LI_m2['africa']))
-    vmax=max(max(counted_LI_m2['india']), max(counted_LI_m2['africa']))
+    vmin=min(min(counted_LI_m2['india']), min(counted_LI_m2['africa']), -1)
+    vmax=max(max(counted_LI_m2['india']), max(counted_LI_m2['africa']), 1)
     divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
     heatmap = plot_scatter(
@@ -210,8 +211,8 @@ for season in seasons:
         subplot_kw={'projection': ccrs.PlateCarree()}
     )
 
-    vmin=min(min(counted_LI_m4['india']), min(counted_LI_m4['africa']))
-    vmax=max(max(counted_LI_m4['india']), max(counted_LI_m4['africa']))
+    vmin=min(min(counted_LI_m4['india']), min(counted_LI_m4['africa']), -1)
+    vmax=max(max(counted_LI_m4['india']), max(counted_LI_m4['africa']), 1)
     divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
     heatmap = plot_scatter(
@@ -249,8 +250,8 @@ for season in seasons:
         subplot_kw={'projection': ccrs.PlateCarree()}
     )
 
-    vmin=min(min(counted_LI_m6['india']), min(counted_LI_m6['africa']))
-    vmax=max(max(counted_LI_m6['india']), max(counted_LI_m6['africa']))
+    vmin=min(min(counted_LI_m6['india']), min(counted_LI_m6['africa']), -1)
+    vmax=max(max(counted_LI_m6['india']), max(counted_LI_m6['africa']), 1)
     divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
     heatmap = plot_scatter(
