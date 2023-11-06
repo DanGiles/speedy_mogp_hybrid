@@ -9,7 +9,7 @@ from metpy.units import units
 
 from script_variables import *
 
-analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
+# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
 
 level_925 = 0
 level_850 = 1
