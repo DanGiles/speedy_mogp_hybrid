@@ -144,9 +144,6 @@ def read_const_grd(filename, nlon, nlat, var):
     data = data.astype(np.float64)
     return data[:,:,var]
 
-lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
-lsm = np.flip(lsm.T, 0)
-
 
 def plot_pcolormesh_scatter(
     ax, 
@@ -231,19 +228,53 @@ def plot_pcolormesh_scatter_wrapper(counted_LI, title):
     plt.close()
 
 
+def plot_LI_vs_precip(counted_LI, precip, title):
+    fig, ax = plt.subplots(
+        1, 1,
+        figsize=(6, 6)
+    )
+
+    ax.scatter(precip['india'], counted_LI['india'], label="India")
+    ax.scatter(precip['africa'], counted_LI['africa'], label="Africa")
+
+    fig.suptitle(f'Precipitation Difference vs Difference in No. of Lifted Index values < {title} \n (Hybrid - SPEEDY); Season: {season}')
+    ax.legend()
+    fig.supylabel(f'Difference in No. of Lifted Index values < {title}')
+    fig.supxlabel('Precipitation Difference [g/(m^2 s)]')
+
+    plt.savefig(
+        os.path.join(output_path, f'lifted_index_vs_precip_{season}_{title}.png')
+    )
+    plt.close()
+
+
+lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
+lsm = np.flip(lsm.T, 0)
+
+
 for season in seasons:
     print(season)
+
     counted_LI_m2 = {}
     counted_LI_m4 = {}
     counted_LI_m6 = {}
     # counted_LI_p2 = {}
+
+    precip = {}
+
+    speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"mean_precip_{season}.npy"))
+    hybrid = np.load(os.path.join(analysis_root, GP_name, f"mean_precip_{season}.npy"))
+    diff = hybrid - speedy
+    precip['india'] = diff[lon_index_india, lat_index_india]
+    precip['africa'] = diff[lon_index_africa, lat_index_africa]
+
     for location_i, location in enumerate(locations):
         print(location)
 
         speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"{location}_lifted_index_{season}.npy"))
         hybrid = np.load(os.path.join(analysis_root, GP_name, f"{location}_lifted_index_{season}.npy"))
 
-        # save the lifted index counts for <-2 and >2.
+        # save the lifted index counts for <-2, <-4 and <-6.
         counted_LI_m2[location] = np.zeros((n_points[location]), dtype=int)
         counted_LI_m4[location] = np.zeros((n_points[location]), dtype=int)
         counted_LI_m6[location] = np.zeros((n_points[location]), dtype=int)
@@ -304,9 +335,12 @@ for season in seasons:
     # MINUS 2
     plot_scatter_wrapper(counted_LI_m2, "-2")
     plot_pcolormesh_scatter_wrapper(counted_LI_m2, "-2")
+    plot_LI_vs_precip(counted_LI_m2, precip, "-2")
     # MINUS 4
     plot_scatter_wrapper(counted_LI_m4, "-4")
     plot_pcolormesh_scatter_wrapper(counted_LI_m4, "-4")
+    plot_LI_vs_precip(counted_LI_m4, precip, "-4")
     # MINUS 6
     plot_scatter_wrapper(counted_LI_m6, "-6")
     plot_pcolormesh_scatter_wrapper(counted_LI_m6, "-6")
+    plot_LI_vs_precip(counted_LI_m6, precip, "-6")
