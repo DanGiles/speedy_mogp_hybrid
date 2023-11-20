@@ -96,22 +96,22 @@ def plot_scatter(ax, lon_index, lat_index, field_data, title, divnorm, heatmap=N
     return heatmap
 
 
-def plot_scatter_wrapper(counted_LI, title):
+def plot_scatter_wrapper(field_data, title):
     fig, ax = plt.subplots(
         2, 1, 
         figsize=(8, 8),
         subplot_kw={'projection': ccrs.PlateCarree()}
     )
 
-    vmin=min(min(counted_LI['india']), min(counted_LI['africa']), -1)
-    vmax=max(max(counted_LI['india']), max(counted_LI['africa']), 1)
+    vmin=min(min(field_data['india']), min(field_data['africa']), -1)
+    vmax=max(max(field_data['india']), max(field_data['africa']), 1)
     divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
     heatmap = plot_scatter(
         ax[0],
         lon_index_india,
         lat_index_india,
-        counted_LI['india'],
+        field_data['india'],
         "India",
         divnorm
     )
@@ -119,7 +119,7 @@ def plot_scatter_wrapper(counted_LI, title):
         ax[1],
         lon_index_africa,
         lat_index_africa,
-        counted_LI['africa'],
+        field_data['africa'],
         "Africa",
         divnorm,
         heatmap=heatmap
@@ -191,21 +191,21 @@ def plot_pcolormesh_scatter(
     return heatmap_pcolormesh, heatmap_scatter
 
 
-def plot_pcolormesh_scatter_wrapper(counted_LI, title):
+def plot_pcolormesh_scatter_wrapper(field_data, title):
     fig, ax = plt.subplots(
         2, 1,
         figsize=(10, 8)
     )
 
-    vmin=min(min(counted_LI['india']), min(counted_LI['africa']), -1)
-    vmax=max(max(counted_LI['india']), max(counted_LI['africa']), 1)
+    vmin=min(min(field_data['india']), min(field_data['africa']), -1)
+    vmax=max(max(field_data['india']), max(field_data['africa']), 1)
     divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
 
     plot_pcolormesh_scatter(
         ax[0],
         lon_index_india_points,
         lat_index_india_points,
-        counted_LI['india'],
+        field_data['india'],
         "India",
         divnorm
     )
@@ -213,7 +213,7 @@ def plot_pcolormesh_scatter_wrapper(counted_LI, title):
         ax[1],
         lon_index_africa_points,
         lat_index_africa_points,
-        counted_LI['africa'],
+        field_data['africa'],
         "Africa",
         divnorm
     )
