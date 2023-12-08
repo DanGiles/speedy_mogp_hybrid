@@ -18,7 +18,7 @@ level_850 = 1
 level_700 = 2
 level_500 = 3
 
-output_path = os.path.join(pngs_root, GP_name)
+output_path = os.path.join(pngs_root)
 if not os.path.isdir(output_path):
     os.mkdir(output_path)
 output_path = os.path.join(output_path, 'lifted_index')
@@ -50,7 +50,7 @@ def get_index_mesh(lon_index_points: List[int], lat_index_points: List[int]):
 n_points = {}
 
 lon_index_india_points = [17,18,19,20,21,22,23,24]
-lat_index_india_points = [28,27,26]
+lat_index_india_points = [28,27,26,25,24,23]
 
 lon_index_india, lat_index_india, n_points['india'] = get_index_mesh(
     lon_index_india_points,
@@ -58,7 +58,7 @@ lon_index_india, lat_index_india, n_points['india'] = get_index_mesh(
 )
 
 lon_index_africa_points = [1,2,3,4,5,6,7,8,9,10,11,12,13]
-lat_index_africa_points = [24,23,22]
+lat_index_africa_points = [25,24,23,22]
 
 lon_index_africa, lat_index_africa, n_points['africa'] = get_index_mesh(
     lon_index_africa_points,

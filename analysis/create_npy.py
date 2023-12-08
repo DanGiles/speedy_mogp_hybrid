@@ -146,7 +146,7 @@ def save_summaries(array, name, filename) -> None:
 
     # save Indian continent & indian sea points
     lon_index_india_points = [17,18,19,20,21,22,23,24]
-    lat_index_india_points = [28,27,26]
+    lat_index_india_points = [28,27,26,25,24,23]
 
     lon_index_india, lat_index_india = get_index_mesh(
         lon_index_india_points,
@@ -161,7 +161,7 @@ def save_summaries(array, name, filename) -> None:
 
     # save African continent points
     lon_index_africa_points = [1,2,3,4,5,6,7,8,9,10,11,12,13]
-    lat_index_africa_points = [24,23,22]
+    lat_index_africa_points = [25,24,23,22]
 
     lon_index_africa, lat_index_africa = get_index_mesh(
         lon_index_africa_points,
