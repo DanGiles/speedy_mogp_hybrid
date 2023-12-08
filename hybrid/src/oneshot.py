@@ -139,7 +139,28 @@ def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     return train
 
 
-def mogp_prediction(test, trained_gp, nlon, nlat, nlev):
+# def mogp_prediction(test, gp, nlon, nlat, nlev):
+
+#     variance, uncer, d = gp.predict(test)
+#     T_mean = test[:, 3:11]
+#     Q_mean = test[:, 11:]
+#     resampled_T = np.empty((nlon*nlat, nlev), dtype = np.float64)
+#     resampled_Q = np.empty((nlon*nlat, nlev), dtype = np.float64)
+
+#     low_values_flags = variance < 1e-6  # Where values are low
+#     variance[low_values_flags] = 0.0
+
+#     resampled_T = np.random.normal(T_mean.flatten(), variance[:8,:].T.flatten())
+#     resampled_Q = np.random.normal(Q_mean.flatten(), variance[8:,:].T.flatten())
+
+#     resampled_T = np.reshape(resampled_T.T, (nlon, nlat, nlev))
+#     resampled_T  = np.flip(resampled_T, axis = 2)
+#     resampled_Q = np.reshape(resampled_Q.T, (nlon, nlat, nlev))
+#     resampled_Q  = np.flip(resampled_Q, axis = 2)
+
+#     return resampled_T, resampled_Q
+
+def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
     variance, uncer, d = trained_gp.predict(test)
     print("Prediction")
     if GP_name == "gp_without_oro_var":
@@ -161,12 +182,15 @@ def mogp_prediction(test, trained_gp, nlon, nlat, nlev):
     resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, nlev))
     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
 
+    # resampled_Q = check_total_water(Q_mean, resampled_Q, rho)
+    # resampled_T = check_static_energy(Q_mean, resampled_Q, T_mean, resampled_T)
+
     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
     resampled_T  = np.flip(resampled_T, axis = 2)
     resampled_Q = np.reshape(resampled_Q, (nlon, nlat, nlev))
     resampled_Q  = np.flip(resampled_Q, axis = 2)
 
-    return resampled_T, resampled_Q
+    return variance, uncer, resampled_T, resampled_Q
 
 
 
@@ -186,18 +210,16 @@ def main():
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
     nature_dir = os.path.join(SPEEDY_root, "DATA", "nature")
+    oneshot_dir = os.path.join(HYBRID_data_root, "oneshot")
 
-    IDate = "1982010100"
-    dtDate = "1982010106"
-    number_time_steps = (3652*4) 
+    IDate = "1987060100"
+    dtDate = "1987060106"
     nlon = 96
     nlat = 48
     nlev = 8
     dt = 6
     
-    # Initialisation steps
-    data_folder = os.path.join(HYBRID_data_root, GP_name)
-    create_folders(data_folder)
+    # create_folders(data_folder)
     data = read_grd(os.path.join(nature_dir, IDate +".grd"), nlon, nlat, nlev)
 
     # Read in the orography and land/sea fraction
@@ -205,39 +227,33 @@ def main():
     lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
+    rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
 
     if GP_name == "gp_with_oro_var":
         oro = np.stack((oro, read_oro_var()), axis=2)
 
-    # Main time loop
-    for t in range(0,number_time_steps):
-        # Time counters
-        print(IDate, dtDate, t)
 
-        # Time to do the MOGP magic
-        # Loop through all columns
-        test = data_prep(data, oro, lsm, nlon, nlat)
-        print("Data Prep")
-        resampled_T, resampled_Q = mogp_prediction(test, trained_gp, nlon, nlat, nlev)
-        print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
-        print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
-        data[:,:,16:24] = resampled_T[:,:,:]
-        data[:,:,24:32] = resampled_Q[:,:,:]
+    # Time counters
+    print(IDate, dtDate)
 
-        # # Write updated data to fortran speedy file
-        file = os.path.join(data_folder, (IDate+".grd"))
-        print("Writing file")
-        write_fortran(file, data)
-        print("Done Writing")
+    # Time to do the MOGP magic
+    # Loop through all columns
+    test = data_prep(data, oro, lsm, nlon, nlat)
+    print("Data Prep")
+    variance, uncer, resampled_T, resampled_Q = mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho)
+    print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
+    print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
+    data[:,:,16:24] = resampled_T[:,:,:]
+    data[:,:,24:32] = resampled_Q[:,:,:]
 
-        # # # Speedy integration forward
-        speedy_update(SPEEDY_root, data_folder, IDate, dtDate)
+    np.save(os.path.join(oneshot_dir, f"{IDate}_variance.npy"), variance)
+    np.save(os.path.join(oneshot_dir, f"{IDate}_uncert.npy"), uncer)
 
-        # # # Read Speedy output
-        file = os.path.join(data_folder, (dtDate+".grd"))
-        data = read_grd(file, nlon, nlat, nlev)
-        # # Update time counters
-        IDate, dtDate = step_datetime(IDate, dtDate, SPEEDY_DATE_FORMAT, dt)
+    # # # Write updated data to fortran speedy file
+    # file = os.path.join(data_folder, (IDate+".grd"))
+    # print("Writing file")
+    # write_fortran(file, data)
+    # print("Done Writing")
 
     return
 
