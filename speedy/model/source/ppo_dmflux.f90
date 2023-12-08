@@ -123,8 +123,8 @@ subroutine dmflux(iadd)
     hfluxn(:,2) = hfluxn(:,2)*(1.-fland(:))
 
     ! Surface water budget (in mm/day)
-    save2d_d2(:,1) = save2d_d2(:,1) + prec(:)  *86.400
-    save2d_d2(:,2) = save2d_d2(:,2) + evap(:,3)*86.400
+    save2d_d2(:,1) = save2d_d2(:,1) + prec(:)
+    save2d_d2(:,2) = save2d_d2(:,2) + evap(:,3)
 
     ! Surface momentum budget 
     save2d_d2(:,3) = save2d_d2(:,3) - ustr(:,3)
@@ -138,10 +138,10 @@ subroutine dmflux(iadd)
     save2d_d2(:,7) = save2d_d2(:,7) + hfluxn(:,2)
 
     ! 4.2 Store fluxes for time-mean output
-    ! Surface water budget (in mm/day)
-    save2d_2(:,1) = save2d_2(:,1) + precls(:)*86.400
-    save2d_2(:,2) = save2d_2(:,2) + precnv(:)*86.400
-    save2d_2(:,3) = save2d_2(:,3) + evap(:,3)*86.400
+    ! Surface water budget
+    save2d_2(:,1) = save2d_2(:,1) + precls(:)
+    save2d_2(:,2) = save2d_2(:,2) + precnv(:)
+    save2d_2(:,3) = save2d_2(:,3) + evap(:,3)
 
     ! Surface momentum budget 
     save2d_2(:,4) = save2d_2(:,4) - ustr(:,3)
