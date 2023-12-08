@@ -3,16 +3,16 @@
 COMPILE=gfortran
 
 
- COMLIB1=
+#  COMLIB1=
 
 #COMOTT1=-dalign -O3 -r8
 ###COMOTT1=-dalign -fast -r8
 #COMOTT1=-Ofast -mips4 -IPA -r8
 # COMOTT1=  -fast -O3 -r8
- COMOTT1=  -Ofast -fdefault-real-8
+COMOTT1 = -fallow-argument-mismatch -Ofast -fdefault-real-8
 ### COMOTT1=  -fast  
 
-# COMCONV= -byteswapio 
+# COMCONV= -byteswapio
 # COMCONV= -fconvert=swap
 
 FILES= \

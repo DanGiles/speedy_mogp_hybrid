@@ -38,7 +38,7 @@ echo $YMDH | cut -c7-8 >> fort.2
 echo $YMDH | cut -c9-10 >> fort.2
 ./imp > out.lis 2> out.lis.2
 mv ${TYMDH}.grd $OUTPUT
-rm ${TYMDH}_p.grd
+# rm ${TYMDH}_p.grd
 mv ${TYMDH}_fluxes.grd $OUTPUT
 rm ${TMPDIR}/*
 exit 0
