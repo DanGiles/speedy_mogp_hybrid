@@ -11,9 +11,11 @@ from typing import List
 
 from script_variables import *
 
-# SPEEDY_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/speedy' #override for local compute, otherwise comment out
+SPEEDY_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/speedy' #override for local compute, otherwise comment out
 # analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
 # pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs' #override for local compute, otherwise comment out
+analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan' #override for local compute, otherwise comment out
+pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/pnas' #override for local compute, otherwise comment out
 
 output_path = os.path.join(pngs_root, GP_name)
 if not os.path.isdir(output_path):
@@ -254,8 +256,10 @@ for season in seasons:
         print(var)
         precip = {}
 
-        speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"mean_{var}_{season}.npy"))
-        hybrid = np.load(os.path.join(analysis_root, GP_name, f"mean_{var}_{season}.npy"))
+        # speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"mean_{var}_{season}.npy"))
+        # hybrid = np.load(os.path.join(analysis_root, GP_name, f"mean_{var}_{season}.npy"))
+        speedy = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"mean_{var}_{season}.npy"))
+        hybrid = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"mean_{var}_{season}.npy"))
         diff = hybrid - speedy
 
         precip['india'] = diff[lon_index_india, lat_index_india]
