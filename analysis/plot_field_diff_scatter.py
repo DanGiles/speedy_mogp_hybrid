@@ -1,9 +1,12 @@
+# This script plots the difference in a field between SPEEDY and the hybrid model.
+# It will create a map background version and a pcolormesh background version.
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-# import cartopy.crs as ccrs
+import cartopy.crs as ccrs
 import matplotlib as mpl
-# import cartopy.feature as cfeature
+import cartopy.feature as cfeature
 from typing import List
 
 from script_variables import *
@@ -17,12 +20,12 @@ if not os.path.isdir(output_path):
     os.mkdir(output_path)
 
 vars = {
-    'precip': ['Precipitation', 'g/(m^2 s)'],
+    'precip': ['Precipitation', 'mm/day'],
     # 'ps': ['Air pressure', 'Pa'], 
     # 'cloudc': ['Total cloud cover', 'fraction'], 
     # 'clstr': ['Stratiform cloud cover', 'fraction'], 
-    'precnv': ['Convective precipitation', 'g/(m^2 s)'], 
-    'precls': ['Large-scale precipitation', 'g/(m^2 s)'], 
+    'precnv': ['Convective precipitation', 'g/(m^2 s)'], #Are these units correct?
+    'precls': ['Large-scale precipitation', 'g/(m^2 s)'], #Are these units correct?
     # 'tsr': ['Top-of-atm. Shortwave radiation', 'downward W/m^2'], 
     # 'olr': ['Outgoing longwave radiation', 'upward W/m^2'], 
     # 'u': ['Wind speed (u)', 'm/s'], 
@@ -60,7 +63,7 @@ def get_index_mesh(lon_index_points: List[int], lat_index_points: List[int]):
 n_points = {}
 
 lon_index_india_points = [17,18,19,20,21,22,23,24]
-lat_index_india_points = [28,27,26]
+lat_index_india_points = [28,27,26,25,24,23]
 
 lon_index_india, lat_index_india, n_points['india'] = get_index_mesh(
     lon_index_india_points,
@@ -68,7 +71,7 @@ lon_index_india, lat_index_india, n_points['india'] = get_index_mesh(
 )
 
 lon_index_africa_points = [1,2,3,4,5,6,7,8,9,10,11,12,13]
-lat_index_africa_points = [24,23,22]
+lat_index_africa_points = [25,24,23,22]
 
 lon_index_africa, lat_index_africa, n_points['africa'] = get_index_mesh(
     lon_index_africa_points,
@@ -85,7 +88,6 @@ def read_const_grd(filename, nlon, nlat, var):
     data = np.reshape(f, shape, order="F")
     data = data.astype(np.float64)
     return data[:,:,var]
-
 
 def plot_pcolormesh_scatter(
     ax, 
@@ -165,11 +167,81 @@ def plot_pcolormesh_scatter_wrapper(field_data, var, title, units):
     fig.suptitle(f'Difference in {title} [{units}] \n (Hybrid - SPEEDY); Season: {season}')
 
     plt.savefig(
-        os.path.join(output_path, f'{var}_scatter_pcolormesh_{season}.png')
+        os.path.join(output_path, f'{var}_{season}_field_diff_scatter_pcolormesh.png')
     )
     plt.close()
 
 
+def plot_scatter(
+    ax, 
+    lon_index, 
+    lat_index, 
+    field_data, 
+    title, 
+    divnorm, 
+    heatmap=None
+):
+    ax.set_extent(
+        [min(lon[lon_index]+180)-10, 
+         max(lon[lon_index]+180)+10, 
+         max(lat[lat_index])+10, 
+         min(lat[lat_index])-10], 
+        crs=ccrs.PlateCarree()
+    )
+    ax.coastlines()
+    ax.add_feature(cfeature.BORDERS)
+    # ax.add_feature(cfeature.RIVERS)
+    ax.add_feature(cfeature.OCEAN)
+    heatmap = ax.scatter(
+        lon[lon_index]+180, 
+        lat[lat_index], 
+        c=field_data,
+        s=400,
+        edgecolors='k',
+        cmap='PiYG',
+        norm=divnorm
+    )
+    ax.set_aspect('auto')
+    ax.set_title(title)
+    return heatmap
+
+
+def plot_scatter_wrapper(field_data, var, title, units):
+    fig, ax = plt.subplots(
+        2, 1, 
+        figsize=(8, 8),
+        subplot_kw={'projection': ccrs.PlateCarree()}
+    )
+
+    vmin=min(min(field_data['india']), min(field_data['africa']))
+    vmax=max(max(field_data['india']), max(field_data['africa']))
+    divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    heatmap = plot_scatter(
+        ax[0],
+        lon_index_india,
+        lat_index_india,
+        field_data['india'],
+        "India",
+        divnorm
+    )
+    heatmap = plot_scatter(
+        ax[1],
+        lon_index_africa,
+        lat_index_africa,
+        field_data['africa'],
+        "Africa",
+        divnorm,
+        heatmap=heatmap
+    )
+
+    fig.colorbar(heatmap, ax=ax)
+    fig.suptitle(f'Difference in {title} [{units}] \n (Hybrid - SPEEDY); Season: {season}')
+
+    plt.savefig(
+        os.path.join(output_path, f'{var}_{season}_field_diff_scatter.png')
+    )
+    plt.close()
 
 
 lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
@@ -190,3 +262,4 @@ for season in seasons:
         precip['africa'] = diff[lon_index_africa, lat_index_africa]
 
         plot_pcolormesh_scatter_wrapper(precip, var, info[0], info[1])
+        plot_scatter_wrapper(precip, var, info[0], info[1])
