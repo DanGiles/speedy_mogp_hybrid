@@ -11,13 +11,13 @@ import pickle
 from profile_plotting import *
 from script_variables import *
 
-def make_dir(path: str) -> None:
-    #do not empty directory if it doesn't exist!
-    if os.path.isdir(path):
-        import shutil
-        shutil.rmtree(path)
-    # make directory
-    os.mkdir(path)
+# def make_dir(path: str) -> None:
+#     #do not empty directory if it doesn't exist!
+#     if os.path.isdir(path):
+#         import shutil
+#         shutil.rmtree(path)
+#     # make directory
+#     os.mkdir(path)
 
 
 def hypercube(
@@ -189,15 +189,28 @@ def train_mogp(n_train):
     # print(test.dtype, variances.dtype, truth.dtype)
 
     pngs_path = os.path.join(pngs_root, GP_name)
-    make_dir(pngs_path)
-    variables = ['T', 'Q']
-    for count, variable in enumerate(variables):
-        for region in range(region_count):
-            figname = os.path.join(pngs_path, f"mogp_{variable}_{region:02d}.png")
-            if count == 0:
-                single_profile2(truth[:8, region], variances[:8, region], region, figname)
-            else:
-                single_profile2(truth[8:, region], variances[8:, region], region, figname)
+    # make_dir(pngs_path)
+    output_path = os.path.join(pngs_root, GP_name)
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
+    # variables = ['T', 'Q']
+    # for count, variable in enumerate(variables):
+    #     for region in range(region_count):
+    #         figname = os.path.join(pngs_path, f"mogp_{variable}_{region:02d}.png")
+    #         if count == 0:
+    #             single_profile2(truth[:8, region], variances[:8, region], region, figname)
+    #         else:
+    #             single_profile2(truth[8:, region], variances[8:, region], region, figname)
+
+    for region in range(region_count):
+        plot_mogp_predictions(
+            truth[:8, region],
+            truth[8:, region],
+            variances[:8, region], uncer[:8, region],
+            variances[8:, region], uncer[8:, region],
+            region,
+            output_path
+        )
 
 
 if __name__ == '__main__':
