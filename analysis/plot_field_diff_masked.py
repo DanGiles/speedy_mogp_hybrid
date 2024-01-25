@@ -3,13 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import cartopy.crs as ccrs
-import cmocean as cmo
+# import cmocean as cmo
 
 from script_variables import *
 
-# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
 analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan' #override for local compute, otherwise comment out
-# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs' #override for local compute, otherwise comment out
 pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/pnas' #override for local compute, otherwise comment out
 
 output_path = os.path.join(pngs_root, GP_name)
@@ -38,8 +36,15 @@ vars = {
 # seasons = ['DJF', 'JJA']
 
 # Set up the coordinate system
-lon = np.linspace(-180, 180, 96)
-lat = np.linspace(-90, 90, 48)
+nlon = 96
+nlat = 48
+nlev = 8
+
+# Set up the coordinate system
+lon = np.linspace(-180, 180, nlon, endpoint=False) # endpoint=False to match SPEEDY
+# lat = np.linspace(-90, 90, nlat) # this does NOT match SPEEDY
+lat_vals = "-87.159 -83.479 -79.777 -76.070 -72.362 -68.652 -64.942 -61.232 -57.521 -53.810 -50.099 -46.389 -42.678 -38.967 -35.256 -31.545 -27.833 -24.122 -20.411 -16.700 -12.989  -9.278  -5.567  -1.856   1.856   5.567   9.278  12.989  16.700  20.411  24.122  27.833  31.545  35.256  38.967  42.678  46.389  50.099  53.810  57.521  61.232  64.942  68.652  72.362  76.070  79.777  83.479  87.159"
+lat = np.array([float(val) for val in lat_vals.split()]) # to match SPEEDY
 lon_grid, lat_grid = np.meshgrid(lon, lat)
 # pressure_levels = [30, 100, 200, 300, 500, 700, 850, 925] # hPa
 pressure_levels = [925, 850, 700, 500, 300, 200, 100, 30] # hPa
@@ -126,9 +131,10 @@ for var, info in vars.items():
             fig.colorbar(scalarmap, ax=ax)
             fig.suptitle(f'{info[0]} [{info[1]}]\nAnnual Field Difference - {pressure_levels[i]}hPa')
 
-            plt.savefig(
-                os.path.join(output_path, f'{var}_annual_field_diff_{pressure_levels[i]}hPa.png')
-            )
+            # plt.savefig(
+            #     os.path.join(output_path, f'{var}_annual_field_diff_{pressure_levels[i]}hPa.png')
+            # )
+            plt.show()
             plt.close()
 
 
@@ -164,9 +170,10 @@ for var, info in vars.items():
             fig.colorbar(scalarmap, ax=(ax1, ax2, ax3))
             fig.suptitle(f'{info[0]} [{info[1]}]\nSeasonal Field Differences - {pressure_levels[i]}hPa\n(Hybrid minus SPEEDY)')
 
-            plt.savefig(
-                os.path.join(output_path, f'{var}_seasonal_field_diff_{pressure_levels[i]}hPa.png')
-            )
+            # plt.savefig(
+            #     os.path.join(output_path, f'{var}_seasonal_field_diff_{pressure_levels[i]}hPa.png')
+            # )
+            plt.show()
             plt.close()
 
     else:
@@ -192,9 +199,10 @@ for var, info in vars.items():
         fig.colorbar(scalarmap, ax=ax)
         fig.suptitle(f'{info[0]} [{info[1]}]\nAnnual Field Difference')
 
-        plt.savefig(
-            os.path.join(output_path, f'{var}_annual_field_diff.png')
-        )
+        # plt.savefig(
+        #     os.path.join(output_path, f'{var}_annual_field_diff.png')
+        # )
+        plt.show()
         plt.close()
 
 
@@ -229,7 +237,8 @@ for var, info in vars.items():
         fig.colorbar(scalarmap, ax=(ax1, ax2, ax3))
         fig.suptitle(f'{info[0]} [{info[1]}]\nSeasonal Field Differences\n(Hybrid minus SPEEDY)')
 
-        plt.savefig(
-            os.path.join(output_path, f'{var}_seasonal_field_diff.png')
-        )
+        # plt.savefig(
+        #     os.path.join(output_path, f'{var}_seasonal_field_diff.png')
+        # )
+        plt.show()
         plt.close()
