@@ -74,8 +74,8 @@ for location in locations:
     if SPEEDY:
         print("SPEEDY")
 
-        t_speedy = np.load(os.path.join(analysis_root, 'annual', f'{location}_SPEEDY_t_annual.npy'))    # temperature (Kelvin) - (24, 8, 3608)
-        q_speedy = np.load(os.path.join(analysis_root, 'annual', f'{location}_SPEEDY_q_annual.npy'))    # specific humidity (kg/kg) - (24, 8, 3608)
+        t_speedy = np.load(os.path.join(analysis_root, 'annual', f'{location}_SPEEDY_t_annual.npy'))    # temperature (Kelvin) - (24, 8, 14608)
+        q_speedy = np.load(os.path.join(analysis_root, 'annual', f'{location}_SPEEDY_q_annual.npy'))    # specific humidity (kg/kg) - (24, 8, 14608)
 
         n = q_speedy.shape[0]
         output_array = np.zeros((n, dump_counts)) + 9999
@@ -96,8 +96,8 @@ for location in locations:
     if HYBRID:
         print(GP_name)
 
-        t_hybrid = np.load(os.path.join(analysis_root, 'annual', f'{location}_HYBRID_t_annual.npy'))    # temperature (Kelvin) - (24, 8, 3608)
-        q_hybrid = np.load(os.path.join(analysis_root, 'annual', f'{location}_HYBRID__q_annual.npy'))  
+        t_hybrid = np.load(os.path.join(analysis_root, 'annual', f'{location}_HYBRID_t_annual.npy'))    # temperature (Kelvin) - (24, 8, 14608)
+        q_hybrid = np.load(os.path.join(analysis_root, 'annual', f'{location}_HYBRID_q_annual.npy'))    # specific humidity (kg/kg) - (24, 8, 14608)
 
         n = q_hybrid.shape[0]
         output_array = np.zeros((n, dump_counts)) + 9999
