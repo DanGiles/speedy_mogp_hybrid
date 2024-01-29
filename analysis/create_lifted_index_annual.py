@@ -17,7 +17,7 @@ level_700 = 2
 level_500 = 3
 
 # seasons = ['DJF', 'JJA']
-locations = ['africa', 'india']
+locations = ['arabia', 'africa', 'india']
 
 # season_dump_counts = {'DJF': 3608, 'JJA': 3680}
 dump_counts = (3652*4) 
