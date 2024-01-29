@@ -173,6 +173,19 @@ def save_summaries(array, name, filename) -> None:
         output_africa
     )
 
+    lon_index_arabia_points = [13, 14, 15, 16]
+    lat_index_arabia_points = [28, 27, 26, 25, 24, 23, 22]
+
+    lon_index_africa, lat_index_africa = get_index_mesh(
+        lon_index_arabia_points,
+        lat_index_arabia_points
+    )
+    output_africa = array[lon_index_africa, lat_index_africa, ...]
+    np.save(
+        os.path.join(analysis_root, name, f"arabia_{filename}.npy"),
+        output_africa
+    )
+
 
 
 
