@@ -107,20 +107,20 @@ def plot(
 
 
 
-# Africa point 20 (21 on map) sits around Uganda? It shows a blue blob in Africa, but not the biggest blue blob.
-# Africa point 12 (13 on map) does not really stretch into the Arabian sea enough. I may need to pick another point.
-# India point 11 (12 on map) is over the Indian continent.
-# India point 30 (31 on map) is over the Bay of Bengal halfway between Sri Lanka and northern tip of Simatra, Indonesia.
+# Africa point 21 (22 on map) sits around Uganda? It shows the biggest blue blob in Africa.
+# Arabia point 14 (15 on map)
+# India point 12 (13 on map) is over the Indian continent.
+# India point 31 (32 on map) is over the Bay of Bengal halfway between Sri Lanka and northern tip of Simatra, Indonesia.
 
 plot(
     ['africa', 'india'], 
-    [20, 12], 
+    [21, 12], 
     'DJF', 
     nrows=2, ncols=1
 )
 plot(
-    ['africa', 'africa', 'india', 'india'], 
-    [20, 12, 11, 30], 
+    ['africa', 'arabia', 'india', 'india'], 
+    [21, 14, 12, 31], 
     'DJF', 
     nrows=4, 
     ncols=1, 
@@ -128,11 +128,11 @@ plot(
     filename='lifted_index_comparison_4x1'
 )
 plot(
-    ['africa', 'africa', 'india', 'india'], 
-    [20, 12, 11, 30], 
+    ['africa', 'arabia', 'india', 'india'], 
+    [21, 14, 12, 31], 
     'DJF', 
     nrows=2, 
     ncols=2, 
-    figsize=(13, 7),
+    figsize=(13, 7.5),
     filename='lifted_index_comparison_2x2'
 )
