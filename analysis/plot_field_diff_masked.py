@@ -7,8 +7,8 @@ import cartopy.crs as ccrs
 
 from script_variables import *
 
-analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan' #override for local compute, otherwise comment out
-pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/pnas' #override for local compute, otherwise comment out
+# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan' #override for local compute, otherwise comment out
+# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/pnas' #override for local compute, otherwise comment out
 
 output_path = os.path.join(pngs_root, GP_name)
 if not os.path.isdir(output_path):
