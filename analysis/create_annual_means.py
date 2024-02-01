@@ -7,13 +7,13 @@ from typing import Dict, List
 
 from script_variables import *
 
-def make_dir(path: str) -> None:
-    #do not empty directory if it doesn't exist!
-    if os.path.isdir(path):
-        import shutil
-        shutil.rmtree(path)
-    # make directory
-    os.mkdir(path)
+# def make_dir(path: str) -> None:
+#     #do not empty directory if it doesn't exist!
+#     if os.path.isdir(path):
+#         import shutil
+#         shutil.rmtree(path)
+#     # make directory
+#     os.mkdir(path)
 
 def read_grd(filename) -> np.ndarray:
     nv3d = 4
@@ -173,6 +173,19 @@ def save_summaries(array, name, filename) -> None:
         output_africa
     )
 
+    lon_index_arabia_points = [13, 14, 15, 16]
+    lat_index_arabia_points = [28, 27, 26, 25, 24, 23, 22]
+
+    lon_index_arabia, lat_index_arabia = get_index_mesh(
+        lon_index_arabia_points,
+        lat_index_arabia_points
+    )
+    output_arabia = array[lon_index_arabia, lat_index_arabia, ...]
+    np.save(
+        os.path.join(analysis_root, name, f"arabia_{filename}.npy"),
+        output_arabia
+    )
+
 
 
 
@@ -187,8 +200,7 @@ nlev = 8
 nrec = 10
 
 # Prepare the December, Janurary and February data
-winter = ["12", "01", "02"]
-summer = ["06", "07", "08"]
+months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
 
 # Time increments
 delta = timedelta(hours=6)
@@ -198,131 +210,57 @@ idate = "1982010100"
 SPEEDY_DATE_FORMAT = "%Y%m%d%H"
 
 # Set up array of files
-filenames_winter = []
-filenames_summer = []
-
+filenames = []
 # # Populate the allowed dates
 print("Finding dates")
 while idate != "1992010100":
-    if idate[4:6] in winter:
-        filenames_winter.append(idate)
-    elif idate[4:6] in summer:
-        filenames_summer.append(idate)
+    filenames.append(idate)
     newdate = datetime.strptime(idate, SPEEDY_DATE_FORMAT) + delta
     idate = newdate.strftime(SPEEDY_DATE_FORMAT)
 
 print("all dates found!")
 
-n_winter = len(filenames_winter)
-n_summer = len(filenames_summer)
-
-
-
-
-###########################################################
-# Create the npy files
-
-
-# if analysis directory does not exist, make the directory
-if not os.path.isdir(analysis_root):
-    os.mkdir(analysis_root)
-
-#################### SPEEDY ####################
-if SPEEDY:
-    print("Start SPEEDY")
-    make_dir(os.path.join(analysis_root, 'SPEEDY'))
-    ################################
-    ######## WINTER
-
-    print("Start winter")
-    # non-fluxes
-    output = loop_through_grd(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
-        filenames_winter, 
-        n_winter
-    )
-    for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_DJF")
-
-    #fluxes
-    output = loop_through_flx(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
-        filenames_winter, 
-        n_winter
-    )
-    for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_DJF")
-    
-    ################################
-    ######## SUMMER
-
-    print("Start summer")
-    # non-fluxes
-    output = loop_through_grd(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
-        filenames_summer, 
-        n_summer
-    )
-    for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_JJA")
-
-    # fluxes
-    output = loop_through_flx(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
-        filenames_summer, 
-        n_summer
-    )
-    for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_JJA")
-
-
-
+n_files = len(filenames)
 
 #################### Hybrid ####################
 if HYBRID:
     print("Start Hybrid")
-    make_dir(os.path.join(analysis_root, GP_name))
-    data_folder = os.path.join(HYBRID_data_root, GP_name)
-    ################################
-    ######## WINTER
-
-    print("Start winter")
     # non-fluxes
     output = loop_through_grd(
-        data_folder, 
-        filenames_winter, 
-        n_winter
+        os.path.join(HYBRID_data_root, GP_name),
+        filenames, 
+        n_files
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_DJF")
+        save_summaries(array, GP_name, f"HYBRID_{varname}_annual")
 
     # fluxes
     output = loop_through_flx(
-        data_folder, 
-        filenames_winter, 
-        n_winter
+        os.path.join(HYBRID_data_root, GP_name), 
+        filenames, 
+        n_files
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_DJF")
-    
-    ################################
-    ######## SUMMER
+        save_summaries(array, GP_name, f"HYBRID_{varname}_annual")
 
-    print("Start summer")
+#################### SPEEDY ####################
+if SPEEDY:
+    print("Start SPEEDY")
     # non-fluxes
     output = loop_through_grd(
-        data_folder, 
-        filenames_summer, 
-        n_summer
+        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        filenames, 
+        n_files
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_JJA")
+        save_summaries(array, 'annual', f"SPEEDY_{varname}_annual")
 
-    # fluxes
+    #fluxes
     output = loop_through_flx(
-        data_folder, 
-        filenames_summer, 
-        n_summer
+        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        filenames, 
+        n_files
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_JJA")
+        save_summaries(array, 'annual', f"SPEEDY_{varname}_annual")
+

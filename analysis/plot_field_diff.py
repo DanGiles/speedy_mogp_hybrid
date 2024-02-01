@@ -13,7 +13,7 @@ output_path = os.path.join(pngs_root, GP_name)
 
 # Comment out variables to exclude
 vars = {
-    'precip': ['Precipitation', 'g/(m^2 s)'],
+    'precip': ['Precipitation', 'mm/day'],
     'ps': ['Air pressure', 'Pa'], 
     'cloudc': ['Total cloud cover', 'fraction'], 
     'clstr': ['Stratiform cloud cover', 'fraction'], 
@@ -53,7 +53,7 @@ def plot_map(ax, field_data, title) -> None:
         cmap=mpl.cm.PuOr_r,
         norm=mpl.colors.CenteredNorm()
     )
-    cbar = plt.colorbar(heatmap)
+    cbar = plt.colorbar(heatmap, ax=ax)
     ax.set_title(title)
 
 def plot_t_test(ax, field_data, title) -> None:
@@ -71,7 +71,7 @@ def plot_t_test(ax, field_data, title) -> None:
         extend='both', 
         norm=divnorm
     )
-    cbar = plt.colorbar(heatmap, cmap=cmap, ticks=[-6, -4, -2, 0, 2, 4, 6])
+    cbar = plt.colorbar(heatmap, cmap=cmap, ax = ax, ticks=[-6, -4, -2, 0, 2, 4, 6])
     ax.set_title(title)
 
 
