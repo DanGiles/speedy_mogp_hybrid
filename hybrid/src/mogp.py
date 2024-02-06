@@ -109,12 +109,12 @@ def hypercube(
     ])
 
     # sample space - has shape (n_train, 3)
-    train_indicies = ed.sample(n_train).astype(int)
+    train_indices = ed.sample(n_train).astype(int)
 
     # Training data
-    site_indices = train_indicies[:, 0]
-    cell_indices = train_indicies[:, 1]
-    time_indices = train_indicies[:, 2]
+    site_indices = train_indices[:, 0]
+    cell_indices = train_indices[:, 1]
+    time_indices = train_indices[:, 2]
     X_train = X[:, :, cell_indices, site_indices, time_indices]
     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
     if GP_name == "gp_without_oro_var":
@@ -142,7 +142,7 @@ def hypercube(
     test_indices = np.vstack((site_indices, cell_indices, time_indices)).T
     # print(test_indices.shape, test_indices.dtype)
 
-    return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test, train_indicies, test_indices
+    return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices
 
 
 def crop_speedy(array: np.ndarray) -> np.ndarray:
@@ -200,7 +200,7 @@ def train_mogp(n_train):
     #oro_test.shape:    (n_test, ) or (2, n_test)
     #ls_train.shape:    (n_train, )
     #ls_test.shape:     (n_test, )
-    X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test, train_indicies, test_indicies = hypercube(X, Y, oro, land_sea, n_train)
+    X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices = hypercube(X, Y, oro, land_sea, n_train)
 
     #extract mean air pressure at surface level at all locations
     #X_train_ps.shape:  (n_train, )
@@ -239,7 +239,7 @@ def train_mogp(n_train):
         # # Save the trained mogp
         np.save(
             os.path.join(gp_directory_root, "train_indices.npy"), 
-            train_indicies
+            train_indices
         )
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
     else:
@@ -271,16 +271,16 @@ def train_mogp(n_train):
     # Save the test indices
     np.save(
         os.path.join(output_path, "test_indices.npy"), 
-        test_indicies
+        test_indices
     )
-    for test_index in range(test_indicies.shape[0]):
+    for test_index in range(test_indices.shape[0]):
         plot_mogp_predictions(
             truth[:8, test_index],
             truth[8:, test_index],
             variances[:8, test_index], uncer[:8, test_index],
             variances[8:, test_index], uncer[8:, test_index],
             # test_index,
-            test_indicies[test_index, :],
+            test_indices[test_index, :],
             output_path
         )
 
