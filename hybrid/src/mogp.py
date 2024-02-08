@@ -8,16 +8,87 @@ import numpy as np
 import mogp_emulator
 import pickle
 
-from profile_plotting import *
+import matplotlib.pyplot as plt
+
 from script_variables import *
 
-def make_dir(path: str) -> None:
-    #do not empty directory if it doesn't exist!
-    if os.path.isdir(path):
-        import shutil
-        shutil.rmtree(path)
-    # make directory
-    os.mkdir(path)
+
+def plot_mogp_predictions(
+    UM_t_var, 
+    UM_q_var,
+    MOGP_t_var, MOGP_t_unc,
+    MOGP_q_var, MOGP_q_unc,
+    # index, 
+    region,
+    output_path: str,
+    sigma = 2,
+) -> None:
+    pressure_levels = [30, 100, 200, 300, 500, 700, 850, 925]
+
+    # print(region)
+    region, subregion, time = region
+
+    fig, axes = plt.subplots(
+        1, 2,
+        figsize=(8, 8),
+        sharey=True,
+    )
+
+    # print("Region: ", region)
+    # print(MOGP_t_var, MOGP_t_unc)
+    # print(MOGP_q_var, MOGP_q_unc)
+
+    axes[0].set_title('Temperature / K')
+    axes[0].errorbar(
+        (MOGP_t_var), 
+        pressure_levels,
+        xerr=np.maximum(0, MOGP_t_var+sigma*MOGP_t_unc), 
+        fmt='o',
+        label="MOGP"
+    )
+    axes[0].plot(
+        (UM_t_var), 
+        pressure_levels,
+        'x', 
+        color='red', 
+        label="UM 'Truth'"
+    )
+    axes[0].set_xlim(left=0.)
+    axes[0].set_ylim(bottom=0., top=1000.)
+    axes[0].invert_yaxis()
+
+    axes[1].set_title('Specific Humidity / kg/kg')
+    axes[1].errorbar(
+        (MOGP_q_var), 
+        pressure_levels,
+        xerr=np.maximum(0, MOGP_q_var+sigma*MOGP_q_unc), 
+        fmt='o',
+        label="MOGP"
+    )
+    axes[1].plot(
+        (UM_q_var), 
+        pressure_levels,
+        'x', 
+        color='red', 
+        label="UM 'Truth'"
+    )
+    axes[1].set_xlim(left=0.)
+    axes[1].set_ylim(bottom=0., top=1000.)
+    axes[1].invert_yaxis()
+
+    fig.supxlabel("Standard Deviation")
+    fig.supylabel("Pressure (hPa)")
+    fig.suptitle(f"Standard Deviations\nRegion: {region+1}, Subregion: {subregion+1}, Time: {(time*6):02d}:00")
+    plt.legend()
+
+    plt.savefig(
+        os.path.join(output_path, f"mogp_pred_{(region+1):02d}_{subregion+1}_{(time*6):02d}.png")
+    )
+    plt.close()
+
+
+
+
 
 
 def hypercube(
@@ -38,12 +109,12 @@ def hypercube(
     ])
 
     # sample space - has shape (n_train, 3)
-    inputs = ed.sample(n_train).astype(int)
+    train_indices = ed.sample(n_train).astype(int)
 
     # Training data
-    site_indices = inputs[:, 0]
-    cell_indices = inputs[:, 1]
-    time_indices = inputs[:, 2]
+    site_indices = train_indices[:, 0]
+    cell_indices = train_indices[:, 1]
+    time_indices = train_indices[:, 2]
     X_train = X[:, :, cell_indices, site_indices, time_indices]
     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
     if GP_name == "gp_without_oro_var":
@@ -68,7 +139,10 @@ def hypercube(
         raise Exception("GP_name not recognised.")
     ls_test = ls[cell_indices, site_indices]
 
-    return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test
+    test_indices = np.vstack((site_indices, cell_indices, time_indices)).T
+    # print(test_indices.shape, test_indices.dtype)
+
+    return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices
 
 
 def crop_speedy(array: np.ndarray) -> np.ndarray:
@@ -76,8 +150,6 @@ def crop_speedy(array: np.ndarray) -> np.ndarray:
     "30, 100, 200, 300, 500, 700, 850 and 925 hPa"
 
     pressure_level = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
-    # pressure_level *= 100
-    # for ex in range(len(array[0,0,:])):
     indices = np.zeros(len(pressure_level), dtype=int)
     for j in range(len(pressure_level)):
         indices[j] = np.argmin(np.abs(pressure_level[j] - array[0, :, 0]))
@@ -128,7 +200,7 @@ def train_mogp(n_train):
     #oro_test.shape:    (n_test, ) or (2, n_test)
     #ls_train.shape:    (n_train, )
     #ls_test.shape:     (n_test, )
-    X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test = hypercube(X, Y, oro, land_sea, n_train)
+    X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices = hypercube(X, Y, oro, land_sea, n_train)
 
     #extract mean air pressure at surface level at all locations
     #X_train_ps.shape:  (n_train, )
@@ -165,6 +237,10 @@ def train_mogp(n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
+        np.save(
+            os.path.join(gp_directory_root, "train_indices.npy"), 
+            train_indices
+        )
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
@@ -188,16 +264,25 @@ def train_mogp(n_train):
     variances, uncer, d = gp.predict(test.T)
     # print(test.dtype, variances.dtype, truth.dtype)
 
-    pngs_path = os.path.join(pngs_root, GP_name)
-    make_dir(pngs_path)
-    variables = ['T', 'Q']
-    for count, variable in enumerate(variables):
-        for region in range(region_count):
-            figname = os.path.join(pngs_path, f"mogp_{variable}_{region:02d}.png")
-            if count == 0:
-                single_profile2(truth[:8, region], variances[:8, region], region, figname)
-            else:
-                single_profile2(truth[8:, region], variances[8:, region], region, figname)
+    output_path = os.path.join(pngs_root, GP_name)
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
+
+    # Save the test indices
+    np.save(
+        os.path.join(output_path, "test_indices.npy"), 
+        test_indices
+    )
+    for test_index in range(test_indices.shape[0]):
+        plot_mogp_predictions(
+            truth[:8, test_index],
+            truth[8:, test_index],
+            variances[:8, test_index], uncer[:8, test_index],
+            variances[8:, test_index], uncer[8:, test_index],
+            # test_index,
+            test_indices[test_index, :],
+            output_path
+        )
 
 
 if __name__ == '__main__':
