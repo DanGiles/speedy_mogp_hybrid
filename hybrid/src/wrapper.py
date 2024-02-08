@@ -125,7 +125,7 @@ def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
         train[:, 2] = ls.flatten()
         train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
         train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
-    elif GP_name == "gp_with_oro_var":
+    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
         # Version for gp_with_oro_var
         train = np.empty(((nlon*nlat),20), dtype = np.float64)
         train[:, 0] = data[:,:,32].flatten()
@@ -145,7 +145,7 @@ def mogp_prediction(test, trained_gp, nlon, nlat, nlev):
     if GP_name == "gp_without_oro_var":
         T_mean = test[:, 3:11]
         Q_mean = test[:, 11:]
-    elif GP_name == "gp_with_oro_var":
+    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
         T_mean = test[:, 4:12]
         Q_mean = test[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
@@ -206,7 +206,7 @@ def main():
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
 
-    if GP_name == "gp_with_oro_var":
+    if GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
         oro = np.stack((oro, read_oro_var()), axis=2)
 
     # Main time loop
