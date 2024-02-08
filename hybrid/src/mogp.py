@@ -88,7 +88,35 @@ def plot_mogp_predictions(
 
 
 
+def stratified_experimental_design(
+    n_train: int
+) -> np.ndarray:
+    # test design over region, subregion and time
+    ed = mogp_emulator.LatinHypercubeDesign([
+        (0, region_count), 
+        (0, subregion_count), 
+        (0, 4)
+    ])
 
+    # There are 8 rows with constant latitude, these are symetric around the equator
+    # The first 4 rows in the northern hemisphere have 3, 9, 13 and 15 LAMs respectively, totally 40 LAMs.
+    # We need to build the stratified samples over these points. Lets do so proportionally to the number of LAMs in each row.
+    lam_row_counts = [3, 9, 13, 15, 15, 13, 9, 3]
+    sample_row_counts = [round(n_train * (lam_row_count/region_count)) for lam_row_count in lam_row_counts]
+    running_sum = 0
+    samples = np.empty((0, 3), dtype=int)
+    for lam_count, sample_row_count in zip(lam_row_counts, sample_row_counts):
+        ed = mogp_emulator.LatinHypercubeDesign([
+            (running_sum, running_sum+lam_count), 
+            (0, subregion_count), 
+            (0, 4)
+        ])
+        
+        sample = ed.sample(sample_row_count).astype(int)
+        samples = np.vstack((samples, sample))
+        
+        running_sum += lam_count
+    return samples
 
 
 def hypercube(
@@ -101,15 +129,18 @@ def hypercube(
     # Size of the training and testing datasets
     n_test = 100 # test sample size
 
-    # test design over region, subregion and time
-    ed = mogp_emulator.LatinHypercubeDesign([
-        (0, region_count), 
-        (0, subregion_count), 
-        (0, 4)
-    ])
+    # # test design over region, subregion and time
+    # ed = mogp_emulator.LatinHypercubeDesign([
+    #     (0, region_count), 
+    #     (0, subregion_count), 
+    #     (0, 4)
+    # ])
 
-    # sample space - has shape (n_train, 3)
-    train_indices = ed.sample(n_train).astype(int)
+    # # sample space - has shape (n_train, 3)
+    # train_indices = ed.sample(n_train).astype(int)
+
+    ##### TRY THE NEW STRATIFIED DESIGN #####
+    train_indices = stratified_experimental_design(n_train)
 
     # Training data
     site_indices = train_indices[:, 0]
