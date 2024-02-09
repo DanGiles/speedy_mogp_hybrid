@@ -269,7 +269,7 @@ def train_mogp(n_train):
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
         np.save(
-            os.path.join(gp_directory_root, "train_indices.npy"), 
+            os.path.join(gp_directory_root, f"{GP_name}_train_indices.npy"), 
             train_indices
         )
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
