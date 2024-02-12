@@ -91,13 +91,6 @@ def plot_mogp_predictions(
 def stratified_experimental_design(
     n_train: int
 ) -> np.ndarray:
-    # test design over region, subregion and time
-    ed = mogp_emulator.LatinHypercubeDesign([
-        (0, region_count), 
-        (0, subregion_count), 
-        (0, 4)
-    ])
-
     # There are 8 rows with constant latitude, these are symetric around the equator
     # The first 4 rows in the northern hemisphere have 3, 9, 13 and 15 LAMs respectively, totally 40 LAMs.
     # We need to build the stratified samples over these points. Lets do so proportionally to the number of LAMs in each row.
