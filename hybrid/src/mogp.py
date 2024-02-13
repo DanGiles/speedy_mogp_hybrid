@@ -27,7 +27,6 @@ def plot_mogp_predictions(
 
     # print(region)
     region, subregion, time = region
-
     fig, axes = plt.subplots(
         1, 2,
         figsize=(8, 8),
@@ -151,26 +150,31 @@ def sampler(
         ls:np.ndarray,
         n_size: int
     ):
-    # Size of the training and testing datasets
+
     rng = np.random.default_rng()
     X_split = np.zeros((3, UM_levels, region_count, n_size))
     Y_split = np.zeros((2, UM_levels, region_count, n_size))
     oro_split = np.zeros((2, region_count, n_size))
     ls_split = np.zeros((region_count, n_size))
 
+    indx = np.zeros((region_count, n_size, 3))
+
     for region in range(region_count):
-        indices = np.unravel_index(rng.integers((num_timesteps*num_days*subregion_count), size=n_size), (num_timesteps, subregion_count, num_days))
-        X_split[:, :, region, :] = X[:, :, indices[0], region, indices[1], indices[2]]
-        Y_split[:, :, region, :] = Y[:, :, indices[0], region, indices[1], indices[2]]
-        oro_split[:, region, :] = oro[:, indices[0], region]
-        ls_split[region, :] = ls[indices[0], region].T
+        indices = np.unravel_index(rng.integers((num_timesteps*num_days*subregion_count), size=n_size), (subregion_count, num_timesteps, num_days))
+        X_split[:, :, region, :] = X[:, :, region, indices[0], indices[1], indices[2]]
+        Y_split[:, :, region, :] = Y[:, :, region, indices[0], indices[1], indices[2]]
+        oro_split[:, region, :] = oro[:, region, indices[0]]
+        ls_split[region, :] = ls[region, indices[0]]
+        indx[region, :, 0] = indices[0]
+        indx[region, :, 1] = indices[1]
+        indx[region, :, 2] = indices[2]
 
     X_split = np.reshape(X_split, (3, UM_levels, region_count*n_size))
     Y_split = np.reshape(Y_split, (2, UM_levels, region_count*n_size))
     oro_split = np.reshape(oro_split, (2, region_count*n_size))
     ls_split = np.reshape(ls_split, (region_count*n_size))
 
-    return X_split, Y_split, oro_split, ls_split
+    return X_split, Y_split, oro_split, ls_split, indx
 
 def crop_speedy(array: np.ndarray) -> np.ndarray:
     "Pressure Levels in Speedy defined on pressure levels"
@@ -211,11 +215,11 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
 
 def loop_through_days(processed_data_root):
     X = np.zeros(
-        (3, UM_levels, subregion_count, region_count, num_timesteps, num_days)
+        (3, UM_levels, region_count, subregion_count, num_timesteps, num_days)
     )
     #(3, UM_levels, subregion_count, region_count, len(time))
     Y = np.zeros(
-        (2, UM_levels, subregion_count, region_count, num_timesteps, num_days)
+        (2, UM_levels, region_count, subregion_count, num_timesteps, num_days)
     )
     for day in range(1,num_days):
         X[...,day] = np.load(os.path.join(processed_data_root, f"202001{day:02d}_mean.npy"))
@@ -223,12 +227,13 @@ def loop_through_days(processed_data_root):
 
     return X, Y
 
-def train_mogp(n_train):
+def train_mogp():
 
     X, Y = loop_through_days(processed_data_root)
+
     oro = np.load(os.path.join(processed_data_root, "20200101_orography.npy"))
     land_sea = np.load(os.path.join(processed_data_root, "20200101_land_sea.npy"))
-    print(oro.shape, land_sea.shape)
+    print(X.shape, Y.shape, oro.shape, land_sea.shape)
 
     # #X_train.shape:     (3, UM_levels, n_train)
     # #X_test.shape:      (3, UM_levels, n_test)
@@ -238,9 +243,9 @@ def train_mogp(n_train):
     # #oro_test.shape:    (n_test, ) or (2, n_test)
     # #ls_train.shape:    (n_train, )
     # #ls_test.shape:     (n_test, )
-    X_train, Y_train, oro_train, ls_train = sampler(X, Y, oro, land_sea, n_size=10)
-    X_test, Y_test, oro_test, ls_test = sampler(X, Y, oro, land_sea, n_size=5)
-
+    X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=1)
+    X_test, Y_test, oro_test, ls_test, test_indices = sampler(X, Y, oro, land_sea, n_size=1)
+    print(test_indices.shape)
     print(X_train.shape, Y_train.shape, oro_train.shape, ls_train.shape)
     print(X_test.shape, Y_test.shape, oro_test.shape, ls_test.shape)
     #extract mean air pressure at surface level at all locations
@@ -275,56 +280,53 @@ def train_mogp(n_train):
     if TRAIN_GP is True:
         # # Defining and fitting the MOGP
         #gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="SquaredExponential")
-        gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
+        gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52", nugget='adaptive')
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
         # np.save(
         #     os.path.join(gp_directory_root, "train_indices.npy"), 
         #     train_indices
         # )
-        pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
+        pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "wb"))
     else:
         #Read in the pre-trained GP
         gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
 
 
+    # # Setting up the testing dataset
+    test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, Y_test)
+    print("test and truth", test.shape, truth.shape)
+    # Loading the trained mogp from file. Not needed but used to test implementation
+    # test = np.load(os.path.join(output_folder, "test.npy"))
+    # truth = np.load(os.path.join(output_folder, "truth.npy"))
+    np.save(os.path.join(gp_directory_root, "test.npy"), test)
+    np.save(os.path.join(gp_directory_root, "truth.npy"), truth)
 
+    # Predict using the MOGP
+    variances, uncer, d = gp.predict(test.T)
+    # print(test.dtype, variances.dtype, truth.dtype)
 
+    output_path = os.path.join(pngs_root, GP_name)
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
 
-
-    # # # Setting up the testing dataset
-    # test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, y_test)
-    # print("test and truth", test.shape, truth.shape)
-    # # Loading the trained mogp from file. Not needed but used to test implementation
-    # # test = np.load(os.path.join(output_folder, "test.npy"))
-    # # truth = np.load(os.path.join(output_folder, "truth.npy"))
-    # # np.save(os.path.join(output_folder, "test.npy"), test)
-    # # np.save(os.path.join(output_folder, "truth.npy"), truth)
-
-    # # Predict using the MOGP
-    # variances, uncer, d = gp.predict(test.T)
-    # # print(test.dtype, variances.dtype, truth.dtype)
-
-    # output_path = os.path.join(pngs_root, GP_name)
-    # if not os.path.isdir(output_path):
-    #     os.mkdir(output_path)
-
-    # # Save the test indices
+    # Save the test indices
     # np.save(
     #     os.path.join(output_path, "test_indices.npy"), 
     #     test_indices
     # )
-    # for test_index in range(test_indices.shape[0]):
-    #     plot_mogp_predictions(
-    #         truth[:8, test_index],
-    #         truth[8:, test_index],
-    #         variances[:8, test_index], uncer[:8, test_index],
-    #         variances[8:, test_index], uncer[8:, test_index],
-    #         # test_index,
-    #         test_indices[test_index, :],
-    #         output_path
-    #     )
+    print(truth.shape)
+    for test_index in range(test_indices.shape[0]):
+        plot_mogp_predictions(
+            truth[:8, test_index],
+            truth[8:, test_index],
+            variances[:8, test_index], uncer[:8, test_index],
+            variances[8:, test_index], uncer[8:, test_index],
+            # test_index,
+            (test_index, test_index, test_index),
+            output_path
+        )
 
 
 if __name__ == '__main__':
-    train_mogp(800)
+    train_mogp()

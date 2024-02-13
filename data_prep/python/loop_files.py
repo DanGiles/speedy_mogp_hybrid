@@ -43,7 +43,7 @@ def loop(
                     stash_code
                 )
                 data = np.reshape(data, (UM_levels, subregion_count))
-                input_array[j, :, :, i, t] = data
+                input_array[j, :, i, :, t] = data
 
 
 
@@ -65,8 +65,7 @@ def loop_2d(
                 operation,
                 stash_code
             )
-            input_array[k, :, i] = np.array(data).flatten()
-
+            input_array[k, i, :] = np.array(data).flatten()
 
 
 def main(day: int):
@@ -75,7 +74,7 @@ def main(day: int):
     time = ['000', '006', '012', '018']
     oper = 'AVG'
     input_array = np.zeros(
-        (3, UM_levels, subregion_count, region_count, len(time))
+        (3, UM_levels, region_count, subregion_count, len(time))
     )
     loop(day, stash, time, oper, input_array)
     np.save(f'{output_root}/202001{day:02d}_mean.npy', input_array)
@@ -83,7 +82,7 @@ def main(day: int):
     stash = ['16004','00010']
     oper = 'STD'
     input_array = np.zeros(
-        (2, UM_levels, subregion_count, region_count, len(time))
+        (2, UM_levels, region_count, subregion_count, len(time))
     )
     loop(day, stash, time, oper, input_array)
     np.save(f'{output_root}/202001{day:02d}_std.npy', input_array)
@@ -92,7 +91,7 @@ def main(day: int):
     twodstash = ['00033']
     oper = ['AVG', 'STD']
     input_array = np.zeros(
-        (2, subregion_count, region_count)
+        (2, region_count, subregion_count)
     )
     loop_2d(day, twodstash[0], time[0], oper, input_array)
     np.save(f'{output_root}/202001{day:02d}_orography.npy', input_array)
@@ -100,7 +99,7 @@ def main(day: int):
     twodstash = ['00030']
     oper = ['AVG']
     input_array = np.zeros(
-        (1, subregion_count, region_count)
+        (1, region_count, subregion_count)
     )
     loop_2d(day, twodstash[0], time[0], oper, input_array)
     input_array = np.squeeze(input_array, axis=0) #this line removes the first dimension.
