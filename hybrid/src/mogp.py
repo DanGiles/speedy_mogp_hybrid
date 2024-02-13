@@ -91,59 +91,86 @@ def plot_mogp_predictions(
 
 
 
-def hypercube(
-        X: np.ndarray, 
-        Y: np.ndarray, 
-        oro, 
-        ls, 
-        n_train: int
+# def hypercube(
+#         X: np.ndarray, 
+#         Y: np.ndarray, 
+#         oro, 
+#         ls, 
+#         n_train: int
+#     ):
+#     # Size of the training and testing datasets
+#     n_test = 100 # test sample size
+
+#     # test design over region, subregion and time
+#     ed = mogp_emulator.LatinHypercubeDesign([
+#         (0, region_count), 
+#         (0, subregion_count), 
+#         (0, 4)
+#     ])
+
+#     # sample space - has shape (n_train, 3)
+#     train_indices = ed.sample(n_train).astype(int)
+
+#     # Training data
+#     site_indices = train_indices[:, 0]
+#     cell_indices = train_indices[:, 1]
+#     time_indices = train_indices[:, 2]
+#     X_train = X[:, :, cell_indices, site_indices, time_indices]
+#     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
+#     if GP_name == "gp_without_oro_var":
+#         oro_train = oro[0, cell_indices, site_indices]
+#     elif GP_name == "gp_with_oro_var":
+#         oro_train = oro[:, cell_indices, site_indices]
+#     else:
+#         raise Exception("GP_name not recognised.")
+#     ls_train = ls[cell_indices, site_indices]
+
+#     # Testing data
+#     site_indices = np.random.choice(region_count, size=n_test, replace=True)
+#     cell_indices = np.random.choice(subregion_count, size=n_test, replace=True)
+#     time_indices = np.random.choice(4, size=n_test, replace=True)
+#     X_test = X[:, :, cell_indices, site_indices, time_indices]
+#     Y_test = Y[:, :, cell_indices, site_indices, time_indices]
+#     if GP_name == "gp_without_oro_var":
+#         oro_test = oro[0, cell_indices, site_indices]
+#     elif GP_name == "gp_with_oro_var":
+#         oro_test = oro[:, cell_indices, site_indices]
+#     else:
+#         raise Exception("GP_name not recognised.")
+#     ls_test = ls[cell_indices, site_indices]
+
+#     test_indices = np.vstack((site_indices, cell_indices, time_indices)).T
+#     # print(test_indices.shape, test_indices.dtype)
+
+#     return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices
+
+def sampler(
+        X:np.ndarray, 
+        Y:np.ndarray,
+        oro:np.ndarray,
+        ls:np.ndarray,
+        n_size: int
     ):
     # Size of the training and testing datasets
-    n_test = 100 # test sample size
+    rng = np.random.default_rng()
+    X_split = np.zeros((3, UM_levels, region_count, n_size))
+    Y_split = np.zeros((2, UM_levels, region_count, n_size))
+    oro_split = np.zeros((2, region_count, n_size))
+    ls_split = np.zeros((region_count, n_size))
 
-    # test design over region, subregion and time
-    ed = mogp_emulator.LatinHypercubeDesign([
-        (0, region_count), 
-        (0, subregion_count), 
-        (0, 4)
-    ])
+    for region in range(region_count):
+        indices = np.unravel_index(rng.integers((num_timesteps*num_days*subregion_count), size=n_size), (num_timesteps, subregion_count, num_days))
+        X_split[:, :, region, :] = X[:, :, indices[0], region, indices[1], indices[2]]
+        Y_split[:, :, region, :] = Y[:, :, indices[0], region, indices[1], indices[2]]
+        oro_split[:, region, :] = oro[:, indices[0], region]
+        ls_split[region, :] = ls[indices[0], region].T
 
-    # sample space - has shape (n_train, 3)
-    train_indices = ed.sample(n_train).astype(int)
+    X_split = np.reshape(X_split, (3, UM_levels, region_count*n_size))
+    Y_split = np.reshape(Y_split, (2, UM_levels, region_count*n_size))
+    oro_split = np.reshape(oro_split, (2, region_count*n_size))
+    ls_split = np.reshape(ls_split, (region_count*n_size))
 
-    # Training data
-    site_indices = train_indices[:, 0]
-    cell_indices = train_indices[:, 1]
-    time_indices = train_indices[:, 2]
-    X_train = X[:, :, cell_indices, site_indices, time_indices]
-    Y_train = Y[:, :, cell_indices, site_indices, time_indices]
-    if GP_name == "gp_without_oro_var":
-        oro_train = oro[0, cell_indices, site_indices]
-    elif GP_name == "gp_with_oro_var":
-        oro_train = oro[:, cell_indices, site_indices]
-    else:
-        raise Exception("GP_name not recognised.")
-    ls_train = ls[cell_indices, site_indices]
-
-    # Testing data
-    site_indices = np.random.choice(region_count, size=n_test, replace=True)
-    cell_indices = np.random.choice(subregion_count, size=n_test, replace=True)
-    time_indices = np.random.choice(4, size=n_test, replace=True)
-    X_test = X[:, :, cell_indices, site_indices, time_indices]
-    Y_test = Y[:, :, cell_indices, site_indices, time_indices]
-    if GP_name == "gp_without_oro_var":
-        oro_test = oro[0, cell_indices, site_indices]
-    elif GP_name == "gp_with_oro_var":
-        oro_test = oro[:, cell_indices, site_indices]
-    else:
-        raise Exception("GP_name not recognised.")
-    ls_test = ls[cell_indices, site_indices]
-
-    test_indices = np.vstack((site_indices, cell_indices, time_indices)).T
-    # print(test_indices.shape, test_indices.dtype)
-
-    return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices
-
+    return X_split, Y_split, oro_split, ls_split
 
 def crop_speedy(array: np.ndarray) -> np.ndarray:
     "Pressure Levels in Speedy defined on pressure levels"
@@ -182,52 +209,66 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
 
     return train, target
 
+def loop_through_days(processed_data_root):
+    X = np.zeros(
+        (3, UM_levels, subregion_count, region_count, num_timesteps, num_days)
+    )
+    #(3, UM_levels, subregion_count, region_count, len(time))
+    Y = np.zeros(
+        (2, UM_levels, subregion_count, region_count, num_timesteps, num_days)
+    )
+    for day in range(1,num_days):
+        X[...,day] = np.load(os.path.join(processed_data_root, f"202001{day:02d}_mean.npy"))
+        Y[...,day] = np.load(os.path.join(processed_data_root, f"202001{day:02d}_std.npy"))
+
+    return X, Y
 
 def train_mogp(n_train):
-    X = np.load(os.path.join(processed_data_root, "20200101_mean.npy"))
-    Y = np.load(os.path.join(processed_data_root, "20200101_std.npy"))
-    # print(X.shape, Y.shape)
 
-    print("Loaded in the X and Y")
+    X, Y = loop_through_days(processed_data_root)
     oro = np.load(os.path.join(processed_data_root, "20200101_orography.npy"))
     land_sea = np.load(os.path.join(processed_data_root, "20200101_land_sea.npy"))
+    print(oro.shape, land_sea.shape)
 
-    #X_train.shape:     (3, UM_levels, n_train)
-    #X_test.shape:      (3, UM_levels, n_test)
-    #y_train.shape:     (2, UM_levels, n_train)
-    #y_test.shape:      (2, UM_levels, n_test)
-    #oro_train.shape:   (n_train, ) or (2, n_train)
-    #oro_test.shape:    (n_test, ) or (2, n_test)
-    #ls_train.shape:    (n_train, )
-    #ls_test.shape:     (n_test, )
-    X_train, X_test, y_train, y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices = hypercube(X, Y, oro, land_sea, n_train)
+    # #X_train.shape:     (3, UM_levels, n_train)
+    # #X_test.shape:      (3, UM_levels, n_test)
+    # #y_train.shape:     (2, UM_levels, n_train)
+    # #y_test.shape:      (2, UM_levels, n_test)
+    # #oro_train.shape:   (n_train, ) or (2, n_train)
+    # #oro_test.shape:    (n_test, ) or (2, n_test)
+    # #ls_train.shape:    (n_train, )
+    # #ls_test.shape:     (n_test, )
+    X_train, Y_train, oro_train, ls_train = sampler(X, Y, oro, land_sea, n_size=10)
+    X_test, Y_test, oro_test, ls_test = sampler(X, Y, oro, land_sea, n_size=5)
 
+    print(X_train.shape, Y_train.shape, oro_train.shape, ls_train.shape)
+    print(X_test.shape, Y_test.shape, oro_test.shape, ls_test.shape)
     #extract mean air pressure at surface level at all locations
-    #X_train_ps.shape:  (n_train, )
-    #X_test_ps.shape:   (n_test, )
+    # #X_train_ps.shape:  (n_train, )
+    # #X_test_ps.shape:   (n_test, )
     X_train_ps = X_train[0, 0, :]
     X_test_ps = X_test[0, 0, :]
 
-    #extract air temp (and humidity) at desired levels at all locations
+    # #extract air temp (and humidity) at desired levels at all locations
     print("Cropping arrays")
     indices = crop_speedy(X_train)
 
-    #X_train.shape:     (2, 8, n_train)
-    #X_test.shape:      (2, 8, n_test)
-    #y_train.shape:     (2, 8, n_train)
-    #y_test.shape:      (2, 8, n_test)
+    # #X_train.shape:     (2, 8, n_train)
+    # #X_test.shape:      (2, 8, n_test)
+    # #y_train.shape:     (2, 8, n_train)
+    # #y_test.shape:      (2, 8, n_test)
     X_train = X_train[1:, indices, :]
     X_test = X_test[1:, indices, :]
-    y_train = y_train[:, indices, :]
-    y_test = y_test[:, indices, :]
+    Y_train = Y_train[:, indices, :]
+    Y_test = Y_test[:, indices, :]
 
-    # # Setting up the training dataset
-    input, target = data_prep(X_train, X_train_ps, oro_train, ls_train, y_train)
-    # input = np.load(os.path.join(output_folder, "input.npy"))
-    # target = np.load(os.path.join(output_folder, "target.npy"))
+    # # # Setting up the training dataset
+    input, target = data_prep(X_train, X_train_ps, oro_train, ls_train, Y_train)
+    # # input = np.load(os.path.join(output_folder, "input.npy"))
+    # # target = np.load(os.path.join(output_folder, "target.npy"))
     print("input and target", input.shape, target.shape)
-    # np.save(os.path.join(output_folder, "input.npy"), input)
-    # np.save(os.path.join(output_folder, "target.npy"), target)
+    # # np.save(os.path.join(output_folder, "input.npy"), input)
+    # # np.save(os.path.join(output_folder, "target.npy"), target)
 
 
     # This switch is primarily used for my testing
@@ -237,10 +278,10 @@ def train_mogp(n_train):
         gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        np.save(
-            os.path.join(gp_directory_root, "train_indices.npy"), 
-            train_indices
-        )
+        # np.save(
+        #     os.path.join(gp_directory_root, "train_indices.npy"), 
+        #     train_indices
+        # )
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"),"wb"))
     else:
         #Read in the pre-trained GP
@@ -251,39 +292,39 @@ def train_mogp(n_train):
 
 
 
-    # # Setting up the testing dataset
-    test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, y_test)
-    print("test and truth", test.shape, truth.shape)
-    # Loading the trained mogp from file. Not needed but used to test implementation
-    # test = np.load(os.path.join(output_folder, "test.npy"))
-    # truth = np.load(os.path.join(output_folder, "truth.npy"))
-    # np.save(os.path.join(output_folder, "test.npy"), test)
-    # np.save(os.path.join(output_folder, "truth.npy"), truth)
+    # # # Setting up the testing dataset
+    # test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, y_test)
+    # print("test and truth", test.shape, truth.shape)
+    # # Loading the trained mogp from file. Not needed but used to test implementation
+    # # test = np.load(os.path.join(output_folder, "test.npy"))
+    # # truth = np.load(os.path.join(output_folder, "truth.npy"))
+    # # np.save(os.path.join(output_folder, "test.npy"), test)
+    # # np.save(os.path.join(output_folder, "truth.npy"), truth)
 
-    # Predict using the MOGP
-    variances, uncer, d = gp.predict(test.T)
-    # print(test.dtype, variances.dtype, truth.dtype)
+    # # Predict using the MOGP
+    # variances, uncer, d = gp.predict(test.T)
+    # # print(test.dtype, variances.dtype, truth.dtype)
 
-    output_path = os.path.join(pngs_root, GP_name)
-    if not os.path.isdir(output_path):
-        os.mkdir(output_path)
+    # output_path = os.path.join(pngs_root, GP_name)
+    # if not os.path.isdir(output_path):
+    #     os.mkdir(output_path)
 
-    # Save the test indices
-    np.save(
-        os.path.join(output_path, "test_indices.npy"), 
-        test_indices
-    )
-    for test_index in range(test_indices.shape[0]):
-        plot_mogp_predictions(
-            truth[:8, test_index],
-            truth[8:, test_index],
-            variances[:8, test_index], uncer[:8, test_index],
-            variances[8:, test_index], uncer[8:, test_index],
-            # test_index,
-            test_indices[test_index, :],
-            output_path
-        )
+    # # Save the test indices
+    # np.save(
+    #     os.path.join(output_path, "test_indices.npy"), 
+    #     test_indices
+    # )
+    # for test_index in range(test_indices.shape[0]):
+    #     plot_mogp_predictions(
+    #         truth[:8, test_index],
+    #         truth[8:, test_index],
+    #         variances[:8, test_index], uncer[:8, test_index],
+    #         variances[8:, test_index], uncer[8:, test_index],
+    #         # test_index,
+    #         test_indices[test_index, :],
+    #         output_path
+    #     )
 
 
 if __name__ == '__main__':
-    train_mogp(500)
+    train_mogp(800)
