@@ -2,7 +2,7 @@
 
 #COPY & RENAME THIS FILE TO script_variables.py AND EDIT FOR YOUR SETUP
 
-GP_name = 'gp_without_oro_var' # Do NOT include the .pkl file extention
+GP_name = 'gp_with_oro_var' # Do NOT include the .pkl file extention
 
 #Different for each user
 processed_data_root =   '' #Path to your .npy files from data_prep routine
