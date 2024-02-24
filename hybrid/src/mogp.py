@@ -18,15 +18,14 @@ def plot_mogp_predictions(
     UM_q_var,
     MOGP_t_var, MOGP_t_unc,
     MOGP_q_var, MOGP_q_unc,
-    # index, 
-    region,
+    region, 
+    indices,
     output_path: str,
     sigma = 2,
 ) -> None:
     pressure_levels = [30, 100, 200, 300, 500, 700, 850, 925]
 
-    # print(region)
-    region, subregion, time = region
+    time, day = indices
     fig, axes = plt.subplots(
         1, 2,
         figsize=(8, 8),
@@ -77,71 +76,13 @@ def plot_mogp_predictions(
 
     fig.supxlabel("Standard Deviation")
     fig.supylabel("Pressure (hPa)")
-    fig.suptitle(f"Standard Deviations\nRegion: {region+1}, Subregion: {subregion+1}, Time: {(time*6):02d}:00")
+    fig.suptitle(f"Standard Deviations\nRegion: {region+1}, Day: {(day+1):02d}, Time: {(time*6):02d}:00")
     plt.legend()
 
     plt.savefig(
-        os.path.join(output_path, f"mogp_pred_{(region+1):02d}_{subregion+1}_{(time*6):02d}.png")
+        os.path.join(output_path, f"mogp_pred_{(region+1):02d}_{(day+1):02d}_{(time*6):02d}.png")
     )
     plt.close()
-
-
-
-
-
-
-# def hypercube(
-#         X: np.ndarray, 
-#         Y: np.ndarray, 
-#         oro, 
-#         ls, 
-#         n_train: int
-#     ):
-#     # Size of the training and testing datasets
-#     n_test = 100 # test sample size
-
-#     # test design over region, subregion and time
-#     ed = mogp_emulator.LatinHypercubeDesign([
-#         (0, region_count), 
-#         (0, subregion_count), 
-#         (0, 4)
-#     ])
-
-#     # sample space - has shape (n_train, 3)
-#     train_indices = ed.sample(n_train).astype(int)
-
-#     # Training data
-#     site_indices = train_indices[:, 0]
-#     cell_indices = train_indices[:, 1]
-#     time_indices = train_indices[:, 2]
-#     X_train = X[:, :, cell_indices, site_indices, time_indices]
-#     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
-#     if GP_name == "gp_without_oro_var":
-#         oro_train = oro[0, cell_indices, site_indices]
-#     elif GP_name == "gp_with_oro_var":
-#         oro_train = oro[:, cell_indices, site_indices]
-#     else:
-#         raise Exception("GP_name not recognised.")
-#     ls_train = ls[cell_indices, site_indices]
-
-#     # Testing data
-#     site_indices = np.random.choice(region_count, size=n_test, replace=True)
-#     cell_indices = np.random.choice(subregion_count, size=n_test, replace=True)
-#     time_indices = np.random.choice(4, size=n_test, replace=True)
-#     X_test = X[:, :, cell_indices, site_indices, time_indices]
-#     Y_test = Y[:, :, cell_indices, site_indices, time_indices]
-#     if GP_name == "gp_without_oro_var":
-#         oro_test = oro[0, cell_indices, site_indices]
-#     elif GP_name == "gp_with_oro_var":
-#         oro_test = oro[:, cell_indices, site_indices]
-#     else:
-#         raise Exception("GP_name not recognised.")
-#     ls_test = ls[cell_indices, site_indices]
-
-#     test_indices = np.vstack((site_indices, cell_indices, time_indices)).T
-#     # print(test_indices.shape, test_indices.dtype)
-
-#     return X_train, X_test, Y_train, Y_test, oro_train, oro_test, ls_train, ls_test, train_indices, test_indices
 
 def sampler(
         X:np.ndarray, 
@@ -157,24 +98,23 @@ def sampler(
     oro_split = np.zeros((2, region_count, n_size))
     ls_split = np.zeros((region_count, n_size))
 
-    indx = np.zeros((region_count, n_size, 3))
+    indx = np.zeros((region_count, n_size, 2))
 
     for region in range(region_count):
-        indices = np.unravel_index(rng.integers((num_timesteps*num_days*subregion_count), size=n_size), (subregion_count, num_timesteps, num_days))
-        X_split[:, :, region, :] = X[:, :, region, indices[0], indices[1], indices[2]]
-        Y_split[:, :, region, :] = Y[:, :, region, indices[0], indices[1], indices[2]]
-        oro_split[:, region, :] = oro[:, region, indices[0]]
-        ls_split[region, :] = ls[region, indices[0]]
+        indices = np.unravel_index(rng.integers((num_timesteps*num_days), size=n_size), (num_timesteps, num_days))
+        X_split[:, :, region, :] = X[:, :, region, indices[0], indices[1]]
+        Y_split[:, :, region, :] = Y[:, :, region, indices[0], indices[1]]
+        oro_split[:, region, :] =  np.repeat(oro[:, region, np.newaxis], n_size, axis=1)
+        ls_split[region, :] = ls[region]
         indx[region, :, 0] = indices[0]
         indx[region, :, 1] = indices[1]
-        indx[region, :, 2] = indices[2]
 
     X_split = np.reshape(X_split, (3, UM_levels, region_count*n_size))
     Y_split = np.reshape(Y_split, (2, UM_levels, region_count*n_size))
     oro_split = np.reshape(oro_split, (2, region_count*n_size))
     ls_split = np.reshape(ls_split, (region_count*n_size))
 
-    return X_split, Y_split, oro_split, ls_split, indx
+    return X_split, Y_split, oro_split, ls_split, indx.astype(int)
 
 def crop_speedy(array: np.ndarray) -> np.ndarray:
     "Pressure Levels in Speedy defined on pressure levels"
@@ -215,15 +155,15 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
 
 def loop_through_days(processed_data_root):
     X = np.zeros(
-        (3, UM_levels, region_count, subregion_count, num_timesteps, num_days)
+        (3, UM_levels, (region_count*subregion_count), num_timesteps, num_days)
     )
     #(3, UM_levels, subregion_count, region_count, len(time))
     Y = np.zeros(
-        (2, UM_levels, region_count, subregion_count, num_timesteps, num_days)
+        (2, UM_levels, (region_count*subregion_count), num_timesteps, num_days)
     )
-    for day in range(1,num_days):
-        X[...,day] = np.load(os.path.join(processed_data_root, f"202001{day:02d}_mean.npy"))
-        Y[...,day] = np.load(os.path.join(processed_data_root, f"202001{day:02d}_std.npy"))
+    for day in range(0,num_days):
+        X[...,day] = np.load(os.path.join(processed_data_root, f"202001{(day+1):02d}_mean.npy"))
+        Y[...,day] = np.load(os.path.join(processed_data_root, f"202001{(day+1):02d}_std.npy"))
 
     return X, Y
 
@@ -233,7 +173,6 @@ def train_mogp():
 
     oro = np.load(os.path.join(processed_data_root, "20200101_orography.npy"))
     land_sea = np.load(os.path.join(processed_data_root, "20200101_land_sea.npy"))
-    print(X.shape, Y.shape, oro.shape, land_sea.shape)
 
     # #X_train.shape:     (3, UM_levels, n_train)
     # #X_test.shape:      (3, UM_levels, n_test)
@@ -245,9 +184,8 @@ def train_mogp():
     # #ls_test.shape:     (n_test, )
     X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=1)
     X_test, Y_test, oro_test, ls_test, test_indices = sampler(X, Y, oro, land_sea, n_size=1)
-    print(test_indices.shape)
+
     print(X_train.shape, Y_train.shape, oro_train.shape, ls_train.shape)
-    print(X_test.shape, Y_test.shape, oro_test.shape, ls_test.shape)
     #extract mean air pressure at surface level at all locations
     # #X_train_ps.shape:  (n_train, )
     # #X_test_ps.shape:   (n_test, )
@@ -268,10 +206,10 @@ def train_mogp():
     Y_test = Y_test[:, indices, :]
 
     # # # Setting up the training dataset
-    input, target = data_prep(X_train, X_train_ps, oro_train, ls_train, Y_train)
+    train_input, train_target = data_prep(X_train, X_train_ps, oro_train, ls_train, Y_train)
     # # input = np.load(os.path.join(output_folder, "input.npy"))
     # # target = np.load(os.path.join(output_folder, "target.npy"))
-    print("input and target", input.shape, target.shape)
+    print("input and target", train_input.shape, train_target.shape)
     # # np.save(os.path.join(output_folder, "input.npy"), input)
     # # np.save(os.path.join(output_folder, "target.npy"), target)
 
@@ -279,14 +217,9 @@ def train_mogp():
     # This switch is primarily used for my testing
     if TRAIN_GP is True:
         # # Defining and fitting the MOGP
-        #gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="SquaredExponential")
-        gp = mogp_emulator.MultiOutputGP(input.T, target, kernel="Matern52", nugget='adaptive')
+        gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52", nugget='adaptive')
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
-        # np.save(
-        #     os.path.join(gp_directory_root, "train_indices.npy"), 
-        #     train_indices
-        # )
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "wb"))
     else:
         #Read in the pre-trained GP
@@ -294,36 +227,27 @@ def train_mogp():
 
 
     # # Setting up the testing dataset
-    test, truth = data_prep(X_test, X_test_ps, oro_test, ls_test, Y_test)
-    print("test and truth", test.shape, truth.shape)
+    test_input, test_target = data_prep(X_test, X_test_ps, oro_test, ls_test, Y_test)
+    print("test and truth", test_input.shape, test_target.shape)
     # Loading the trained mogp from file. Not needed but used to test implementation
-    # test = np.load(os.path.join(output_folder, "test.npy"))
-    # truth = np.load(os.path.join(output_folder, "truth.npy"))
-    np.save(os.path.join(gp_directory_root, "test.npy"), test)
-    np.save(os.path.join(gp_directory_root, "truth.npy"), truth)
+    np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
+    np.save(os.path.join(gp_directory_root, "truth.npy"), test_target)
 
     # Predict using the MOGP
-    variances, uncer, d = gp.predict(test.T)
-    # print(test.dtype, variances.dtype, truth.dtype)
+    variances, uncer, d = gp.predict(test_input.T)
 
     output_path = os.path.join(pngs_root, GP_name)
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
 
-    # Save the test indices
-    # np.save(
-    #     os.path.join(output_path, "test_indices.npy"), 
-    #     test_indices
-    # )
-    print(truth.shape)
-    for test_index in range(test_indices.shape[0]):
+    for test_index in range(test_indices.shape[0]*test_indices.shape[1]):
         plot_mogp_predictions(
-            truth[:8, test_index],
-            truth[8:, test_index],
+            test_target[:8, test_index],
+            test_target[8:, test_index],
             variances[:8, test_index], uncer[:8, test_index],
             variances[8:, test_index], uncer[8:, test_index],
-            # test_index,
-            (test_index, test_index, test_index),
+            test_index,
+            test_indices[test_index, 0, :],
             output_path
         )
 
