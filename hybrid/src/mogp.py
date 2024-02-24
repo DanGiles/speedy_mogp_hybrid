@@ -93,14 +93,15 @@ def sampler(
     ):
 
     rng = np.random.default_rng()
-    X_split = np.zeros((3, UM_levels, region_count, n_size))
-    Y_split = np.zeros((2, UM_levels, region_count, n_size))
-    oro_split = np.zeros((2, region_count, n_size))
-    ls_split = np.zeros((region_count, n_size))
+    regions = region_count*subregion_count
+    X_split = np.zeros((3, UM_levels, regions, n_size))
+    Y_split = np.zeros((2, UM_levels, regions, n_size))
+    oro_split = np.zeros((2, regions, n_size))
+    ls_split = np.zeros((regions, n_size))
 
-    indx = np.zeros((region_count, n_size, 2))
+    indx = np.zeros((regions, n_size, 2))
 
-    for region in range(region_count):
+    for region in range(regions):
         indices = np.unravel_index(rng.integers((num_timesteps*num_days), size=n_size), (num_timesteps, num_days))
         X_split[:, :, region, :] = X[:, :, region, indices[0], indices[1]]
         Y_split[:, :, region, :] = Y[:, :, region, indices[0], indices[1]]
@@ -109,10 +110,10 @@ def sampler(
         indx[region, :, 0] = indices[0]
         indx[region, :, 1] = indices[1]
 
-    X_split = np.reshape(X_split, (3, UM_levels, region_count*n_size))
-    Y_split = np.reshape(Y_split, (2, UM_levels, region_count*n_size))
-    oro_split = np.reshape(oro_split, (2, region_count*n_size))
-    ls_split = np.reshape(ls_split, (region_count*n_size))
+    X_split = np.reshape(X_split, (3, UM_levels, regions*n_size))
+    Y_split = np.reshape(Y_split, (2, UM_levels, regions*n_size))
+    oro_split = np.reshape(oro_split, (2, regions*n_size))
+    ls_split = np.reshape(ls_split, (regions*n_size))
 
     return X_split, Y_split, oro_split, ls_split, indx.astype(int)
 
@@ -213,11 +214,10 @@ def train_mogp():
     # # np.save(os.path.join(output_folder, "input.npy"), input)
     # # np.save(os.path.join(output_folder, "target.npy"), target)
 
-
     # This switch is primarily used for my testing
     if TRAIN_GP is True:
         # # Defining and fitting the MOGP
-        gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52", nugget='adaptive')
+        gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52")
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "wb"))
@@ -231,10 +231,12 @@ def train_mogp():
     print("test and truth", test_input.shape, test_target.shape)
     # Loading the trained mogp from file. Not needed but used to test implementation
     np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
-    np.save(os.path.join(gp_directory_root, "truth.npy"), test_target)
+    np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
 
     # Predict using the MOGP
-    variances, uncer, d = gp.predict(test_input.T)
+    stds, uncer, d = gp.predict(test_input.T)
+    np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
+    np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
 
     output_path = os.path.join(pngs_root, GP_name)
     if not os.path.isdir(output_path):
@@ -244,8 +246,8 @@ def train_mogp():
         plot_mogp_predictions(
             test_target[:8, test_index],
             test_target[8:, test_index],
-            variances[:8, test_index], uncer[:8, test_index],
-            variances[8:, test_index], uncer[8:, test_index],
+            stds[:8, test_index], uncer[:8, test_index],
+            stds[8:, test_index], uncer[8:, test_index],
             test_index,
             test_indices[test_index, 0, :],
             output_path
