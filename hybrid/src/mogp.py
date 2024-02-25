@@ -117,15 +117,26 @@ def sampler(
 
     return X_split, Y_split, oro_split, ls_split, indx.astype(int)
 
-def crop_speedy(array: np.ndarray) -> np.ndarray:
-    "Pressure Levels in Speedy defined on pressure levels"
-    "30, 100, 200, 300, 500, 700, 850 and 925 hPa"
-
-    pressure_level = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
+def crop_speedy(array: np.ndarray, pressure_level: np.ndarray) -> np.ndarray:
     indices = np.zeros(len(pressure_level), dtype=int)
     for j in range(len(pressure_level)):
-        indices[j] = np.argmin(np.abs(pressure_level[j] - array[0, :, 0]))
+        indices[j] = np.argmin(np.abs(pressure_level[j] - array))
     return indices
+
+def map_to_speedy_pressure_levels(X: np.ndarray, Y: np.ndarray):
+    "Pressure Levels in Speedy defined on pressure levels"
+    "30, 100, 200, 300, 500, 700, 850 and 925 hPa"
+    pressure_level = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
+    pressure_level = np.flip(pressure_level)
+    X_new = np.zeros((3, len(pressure_level), X.shape[2]))
+    Y_new = np.zeros((2, len(pressure_level), Y.shape[2]))
+
+    for region in range(X.shape[2]):
+        indices = crop_speedy(X[0, :, region], pressure_level)
+        X_new[:,:,region] = X[:,indices,region]
+        Y_new[:,:,region] = Y[:,indices,region]
+
+    return X_new, Y_new
 
 
 def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
@@ -135,16 +146,16 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
         train[0, :] = X_ps  #surface level AVG air pressure
         train[1, :] = oro   #orography
         train[2, :] = ls    #land-sea ratio
-        train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
-        train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
+        train[3:11, :] = X[1, :, :] #AVG air temp at desired levels
+        train[11:, :] = X[2, :, :]  #AVG humudity at desired levels
     elif GP_name == "gp_with_oro_var":
         train = np.empty((20, X.shape[2]), dtype = np.float64)
 
         train[0, :] = X_ps  #surface level AVG air pressure
         train[1:3, :] = oro   #orography
         train[3, :] = ls    #land-sea ratio
-        train[4:12, :] = X[0, :, :] #AVG air temp at desired levels
-        train[12:, :] = X[1, :, :]  #AVG humudity at desired levels
+        train[4:12, :] = X[1, :, :] #AVG air temp at desired levels
+        train[12:, :] = X[2, :, :]  #AVG humudity at desired levels
     else:
         raise Exception("GP_name not recognised.")
     
@@ -186,25 +197,16 @@ def train_mogp():
     X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=1)
     X_test, Y_test, oro_test, ls_test, test_indices = sampler(X, Y, oro, land_sea, n_size=1)
 
+    # #extract air temp (and humidity) at desired levels at all locations
+    # print("Cropping arrays")
+    X_train, Y_train = map_to_speedy_pressure_levels(X_train, Y_train)
+    X_test, Y_test = map_to_speedy_pressure_levels(X_test, Y_test)
     print(X_train.shape, Y_train.shape, oro_train.shape, ls_train.shape)
     #extract mean air pressure at surface level at all locations
     # #X_train_ps.shape:  (n_train, )
     # #X_test_ps.shape:   (n_test, )
     X_train_ps = X_train[0, 0, :]
     X_test_ps = X_test[0, 0, :]
-
-    # #extract air temp (and humidity) at desired levels at all locations
-    print("Cropping arrays")
-    indices = crop_speedy(X_train)
-
-    # #X_train.shape:     (2, 8, n_train)
-    # #X_test.shape:      (2, 8, n_test)
-    # #y_train.shape:     (2, 8, n_train)
-    # #y_test.shape:      (2, 8, n_test)
-    X_train = X_train[1:, indices, :]
-    X_test = X_test[1:, indices, :]
-    Y_train = Y_train[:, indices, :]
-    Y_test = Y_test[:, indices, :]
 
     # # # Setting up the training dataset
     train_input, train_target = data_prep(X_train, X_train_ps, oro_train, ls_train, Y_train)
@@ -232,17 +234,21 @@ def train_mogp():
     # Loading the trained mogp from file. Not needed but used to test implementation
     np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
     np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
-
+    # test_target = np.load(os.path.join(gp_directory_root, "test_target.npy"))
     # Predict using the MOGP
     stds, uncer, d = gp.predict(test_input.T)
     np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
     np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
 
+    # stds = np.load(os.path.join(gp_directory_root, "stds.npy"))
+    # uncer = np.load(os.path.join(gp_directory_root, "uncer.npy"))
     output_path = os.path.join(pngs_root, GP_name)
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
+    print(test_target.shape)
 
-    for test_index in range(test_indices.shape[0]*test_indices.shape[1]):
+
+    for test_index in range(test_target.shape[1]):
         plot_mogp_predictions(
             test_target[:8, test_index],
             test_target[8:, test_index],
