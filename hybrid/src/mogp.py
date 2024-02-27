@@ -23,7 +23,7 @@ def plot_mogp_predictions(
     output_path: str,
     sigma = 2,
 ) -> None:
-    pressure_levels = [30, 100, 200, 300, 500, 700, 850, 925]
+    pressure_levels = [925, 850, 700, 500, 300, 200, 100, 30]
 
     time, day = indices
     fig, axes = plt.subplots(
@@ -52,8 +52,7 @@ def plot_mogp_predictions(
         label="UM 'Truth'"
     )
     axes[0].set_xlim(left=0.)
-    axes[0].set_ylim(bottom=0., top=1000.)
-    axes[0].invert_yaxis()
+    axes[0].set_ylim(bottom=1000., top=0.)
 
     axes[1].set_title('Specific Humidity / kg/kg')
     axes[1].errorbar(
@@ -71,8 +70,7 @@ def plot_mogp_predictions(
         label="UM 'Truth'"
     )
     axes[1].set_xlim(left=0.)
-    axes[1].set_ylim(bottom=0., top=1000.)
-    axes[1].invert_yaxis()
+    axes[1].set_ylim(bottom=1000., top=0.)
 
     fig.supxlabel("Standard Deviation")
     fig.supylabel("Pressure (hPa)")
@@ -219,12 +217,13 @@ def train_mogp():
     # This switch is primarily used for my testing
     if TRAIN_GP is True:
         # # Defining and fitting the MOGP
-        gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52")
+        gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52", nugget='adaptive')
         gp = mogp_emulator.fit_GP_MAP(gp)
         # # Save the trained mogp
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "wb"))
     else:
         #Read in the pre-trained GP
+        print(gp_directory_root)
         gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
 
 
