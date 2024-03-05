@@ -115,22 +115,26 @@ def sampler(
 
     return X_split, Y_split, oro_split, ls_split, indx.astype(int)
 
-def crop_speedy(array: np.ndarray, pressure_level: np.ndarray) -> np.ndarray:
-    indices = np.zeros(len(pressure_level), dtype=int)
-    for j in range(len(pressure_level)):
-        indices[j] = np.argmin(np.abs(pressure_level[j] - array))
+def crop_speedy(array: np.ndarray, sigma_levels: np.ndarray) -> np.ndarray:
+    indices = np.zeros(len(sigma_levels), dtype=int)
+    # Convert to sigma coordinates
+    array = array/array[0]
+
+    for j in range(len(sigma_levels)):
+        indices[j] = np.argmin(np.abs(sigma_levels[j] - array))
     return indices
 
 def map_to_speedy_pressure_levels(X: np.ndarray, Y: np.ndarray):
-    "Pressure Levels in Speedy defined on pressure levels"
-    "30, 100, 200, 300, 500, 700, 850 and 925 hPa"
-    pressure_level = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
-    pressure_level = np.flip(pressure_level)
-    X_new = np.zeros((3, len(pressure_level), X.shape[2]))
-    Y_new = np.zeros((2, len(pressure_level), Y.shape[2]))
+    "Pressure Levels in Speedy defined on sigma levels"
+    # pressure_level = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
+    sigma_levels = [0.95, 0.835, 0.685, 0.51, 0.34, 0.20, 0.095, 0.025]
+    # sigma_levels = [0.025, 0.095, 0.2, 0.34, 0.51, 0.685, 0.835, 0.95]
+    # pressure_level = np.flip(pressure_level)
+    X_new = np.zeros((3, len(sigma_levels), X.shape[2]))
+    Y_new = np.zeros((2, len(sigma_levels), Y.shape[2]))
 
     for region in range(X.shape[2]):
-        indices = crop_speedy(X[0, :, region], pressure_level)
+        indices = crop_speedy(X[0, :, region], sigma_levels)
         X_new[:,:,region] = X[:,indices,region]
         Y_new[:,:,region] = Y[:,indices,region]
 
