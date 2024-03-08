@@ -179,7 +179,7 @@ subroutine iogrid(imode)
             qgr1 = qgr
             phigr1 = phigr
             do j=1,ngp
-                rrgr1(j) = save2d_d2(j,1)*3600*24*(4.0/real(nsteps))*(1/1000)  ! (mm/day)
+                rrgr1(j) = save2d_d2(j,1)/real(nsteps) 
             end do
         end if
 
@@ -361,6 +361,8 @@ subroutine iogrid(imode)
 
         close (101)
         print *,'Outputting the OLR, PRECLS, PRECNV and Cloud Fraction'
+        print *,' PRECLS :',minval(precls),maxval(precls)
+        print *,' PRECNV :',minval(precnv),maxval(precnv)
         print *,' OLR :',minval(olr),maxval(olr)
         print *,' CLOUDC :',minval(cloudc),maxval(cloudc)
     else

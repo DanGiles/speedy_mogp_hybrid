@@ -123,7 +123,7 @@ subroutine dmflux(iadd)
     hfluxn(:,2) = hfluxn(:,2)*(1.-fland(:))
 
     ! Surface water budget (in mm/day)
-    save2d_d2(:,1) = save2d_d2(:,1) + prec(:)
+    save2d_d2(:,1) = save2d_d2(:,1) + prec(:) * 86.4 ! Convert g/m^2s -> mm/day
     save2d_d2(:,2) = save2d_d2(:,2) + evap(:,3)
 
     ! Surface momentum budget 
