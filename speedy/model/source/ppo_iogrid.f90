@@ -169,7 +169,7 @@ subroutine iogrid(imode)
                 end do
 
                 do j=1,ngp
-                  rrgr1(j) = save2d_d2(j,1)*3600*24*(4.0/real(nsteps))*(1/1000)  ! (mm/day)
+                  rrgr1(j) = save2d_d2(j,1)*3.6*24.0*(4.0/real(nsteps))  ! (mm/day)
                 end do
             end do
         else  ! sigma-level output
@@ -179,7 +179,7 @@ subroutine iogrid(imode)
             qgr1 = qgr
             phigr1 = phigr
             do j=1,ngp
-                rrgr1(j) = save2d_d2(j,1)/real(nsteps) 
+                rrgr1(j) = save2d_d2(j,1)*3.6*24.0*(4.0/real(nsteps)) ! (mm/day)
             end do
         end if
 
