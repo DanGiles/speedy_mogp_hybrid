@@ -1,6 +1,6 @@
 # This script plots the difference in a field between SPEEDY and the hybrid model.
-# It will create a map background version and a pcolormesh background version.
-
+# Make one big plot filling in gaps between India and African regions of interest ######
+# Statistically insignificant points are masked out ######
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,12 +14,11 @@ from script_variables import *
 # SPEEDY_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/speedy' #override for local compute, otherwise comment out
 # analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/analysis' #override for local compute, otherwise comment out
 # pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs' #override for local compute, otherwise comment out
-# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan' #override for local compute, otherwise comment out
-# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/pnas' #override for local compute, otherwise comment out
+# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan/new_design' #override for local compute, otherwise comment out
+# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/' #override for local compute, otherwise comment out
 
-output_path = os.path.join(pngs_root, GP_name)
-if not os.path.isdir(output_path):
-    os.mkdir(output_path)
+seasons = {'DJF': 3608, 'JJA': 3680, 'annual': 14608} # of the form {season: n_samples}
+# seasons = {'annual': 14608} # of the form {season: n_samples}
 
 vars = {
     'precip': ['Precipitation', 'mm/day'],
@@ -40,8 +39,9 @@ vars = {
     # 'solr': ['Summed outgoing longwave radiation', 'units?'],
 }
 
-seasons = {'DJF': 3608, 'JJA': 3680}#, 'annual': 14608} # of the form {season: n_samples}
-locations = ['africa', 'india']
+output_path = os.path.join(pngs_root, GP_name)
+if not os.path.isdir(output_path):
+    os.mkdir(output_path)
 
 nlon = 96
 nlat = 48
@@ -288,21 +288,71 @@ lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc
 lsm = np.flip(lsm.T, 0)
 
 
-###### Make 2x1 plots for each season, india above, africa below ######
+###### Make one big plot filling in gaps between India and African regions of interest ######
+###### Statistically insignificant points are masked out ######
+lon_index_both_points = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+lat_index_both_points = [28,27,26,25,24,23,22]
+lon_index_both, lat_index_both, n_points['both'] = get_index_mesh(
+    lon_index_both_points,
+    lat_index_both_points
+)
+
 for season in seasons.keys():
     print(season)
     for var, info in vars.items():
         print(var)
-        precip = {}
+        if season == 'annual':
+            speedy = np.load(os.path.join(analysis_root, 'annual', f"mean_SPEEDY_{var}_annual.npy"))
+            hybrid = np.load(os.path.join(analysis_root, 'annual', f"mean_HYBRID_{var}_annual.npy"))
+            speedy_var = np.load(os.path.join(analysis_root, 'annual', f"var_SPEEDY_{var}_annual.npy"))
+            hybrid_var = np.load(os.path.join(analysis_root, 'annual', f"var_HYBRID_{var}_annual.npy"))
+        else:
+            # speedy = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"mean_{var}_{season}.npy"))
+            # hybrid = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"mean_{var}_{season}.npy"))
+            # speedy_var = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"var_{var}_{season}.npy"))
+            # hybrid_var = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"var_{var}_{season}.npy"))
+            speedy = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"mean_SPEEDY_{var}_{season}.npy"))
+            hybrid = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"mean_HYBRID_{var}_{season}.npy"))
+            speedy_var = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"var_SPEEDY_{var}_{season}.npy"))
+            hybrid_var = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"var_HYBRID_{var}_{season}.npy"))
 
-        # speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"mean_{var}_{season}.npy"))
-        # hybrid = np.load(os.path.join(analysis_root, GP_name, f"mean_{var}_{season}.npy"))
-        speedy = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"mean_{var}_{season}.npy"))
-        hybrid = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"mean_{var}_{season}.npy"))
         diff = hybrid - speedy
 
-        precip['india'] = diff[lon_index_india, lat_index_india]
-        precip['africa'] = diff[lon_index_africa, lat_index_africa]
+        diff = diff[lon_index_both, lat_index_both]
+        speedy_var = speedy_var[lon_index_both, lat_index_both]
+        hybrid_var = hybrid_var[lon_index_both, lat_index_both]
 
-        plot_pcolormesh_scatter_wrapper(precip, var, info[0], info[1])
-        plot_scatter_wrapper(precip, var, info[0], info[1])
+        #Welch's t-test - for different variances
+        t_stats = diff/np.sqrt((speedy_var + hybrid_var)/seasons[season])
+        mask = np.abs(t_stats) < 2.0
+        diff_mask = np.ma.array(diff, mask=mask)
+
+        fig, ax = plt.subplots(
+            1, 1,
+            figsize=(11, 4),
+            layout='constrained', 
+        )
+
+        vmin=min(diff)
+        vmax=max(diff)
+        divnorm = mpl.colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+        heatmap_pcolormesh, heatmap_scatter = plot_pcolormesh_scatter(
+            ax,
+            lon_index_both_points,
+            lat_index_both_points,
+            diff_mask,
+            "Africa and India",
+            divnorm,
+            s=300,
+            edgecolors='tab:gray'
+        )
+
+        fig.colorbar(heatmap_pcolormesh, ax=ax, location='left', label='Sea (0.0) -> Land (1.0) Mask', pad=0.005)
+        fig.colorbar(heatmap_scatter, ax=ax, pad=0.005)
+        fig.suptitle(f'Difference in {info[0]} [{info[1]}] \n Hybrid minus SPEEDY - Season: {season}')
+
+        plt.savefig(
+            os.path.join(output_path, f'{var}_{season}_field_diff_scatter_masked.png')
+        )
+        plt.close()
