@@ -8,6 +8,7 @@ GP_name = 'gp_with_oro_var' # Do NOT include the .pkl file extention
 processed_data_root =   '' #Path to your .npy files from data_prep routine
 pngs_root =             '' #Path to where the pngs will be saved to
 gp_directory_root =     '' #Path to your gp.pkl files
+analysis_root =         '' #Path to analysis .npy files after running SPEEDY
 
 HYBRID_root =    '' #Path to hybrid directory
 HYBRID_data_root = '' #Location .grd files from GP predictions ready for SPEEDY hybrid simulation

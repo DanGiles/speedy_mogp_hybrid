@@ -10,8 +10,10 @@ from typing import List, Tuple
 from script_variables import *
 
 # SPEEDY_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/speedy' #override for local compute, otherwise comment out
-# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan' #override for local compute, otherwise comment out
-# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/pnas' #override for local compute, otherwise comment out
+# analysis_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/from_dan/new_design' #override for local compute, otherwise comment out
+# pngs_root = '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/' #override for local compute, otherwise comment out
+
+seasons = ['DJF', 'JJA', 'annual']
 
 #################
 # See the bottom of this script for plotting
@@ -55,8 +57,12 @@ def plot(
     for i, point in enumerate(points):
         location = locations[i]
 
-        speedy = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"{location}_lifted_index_{season}.npy"))
-        hybrid = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"{location}_lifted_index_{season}.npy"))
+        if season == 'annual':
+            speedy = np.load(os.path.join(analysis_root, 'annual', f"{location}_SPEEDY_lifted_index_annual.npy"))
+            hybrid = np.load(os.path.join(analysis_root, 'annual', f"{location}_HYBRID_lifted_index_annual.npy"))
+        else:
+            speedy = np.load(os.path.join(analysis_root, 'speedy_seasonal', f"{location}_lifted_index_{season}.npy"))
+            hybrid = np.load(os.path.join(analysis_root, 'hybrid_seasonal', f"{location}_lifted_index_{season}.npy"))
 
         LI_SPEEDY = speedy[point, :]
         LI_HYBRID = hybrid[point, :]
@@ -97,12 +103,7 @@ def plot(
         plt.savefig(
             os.path.join(output_path, f'{filename}.png')
         )
-    # plt.savefig(
-    #     os.path.join(output_path, f'{location}_{point+1}_{season}_lifted_index.png')
-    # )
-    # plt.close()
-
-    plt.show()
+    # plt.show()
 
 
 
@@ -112,27 +113,28 @@ def plot(
 # India point 12 (13 on map) is over the Indian continent.
 # India point 31 (32 on map) is over the Bay of Bengal halfway between Sri Lanka and northern tip of Simatra, Indonesia.
 
-plot(
-    ['africa', 'india'], 
-    [21, 12], 
-    'DJF', 
-    nrows=2, ncols=1
-)
-plot(
-    ['africa', 'arabia', 'india', 'india'], 
-    [21, 14, 12, 31], 
-    'DJF', 
-    nrows=4, 
-    ncols=1, 
-    figsize=(8, 13),
-    filename='lifted_index_comparison_4x1'
-)
-plot(
-    ['africa', 'arabia', 'india', 'india'], 
-    [21, 14, 12, 31], 
-    'DJF', 
-    nrows=2, 
-    ncols=2, 
-    figsize=(13, 7.5),
-    filename='lifted_index_comparison_2x2'
-)
+for season in seasons:
+    plot(
+        ['africa', 'india'], 
+        [21, 12], 
+        season, 
+        nrows=2, ncols=1
+    )
+    plot(
+        ['africa', 'arabia', 'india', 'india'], 
+        [21, 14, 12, 31], 
+        season, 
+        nrows=4, 
+        ncols=1, 
+        figsize=(8, 13),
+        filename=f'lifted_index_{season}_comparison_4x1'
+    )
+    plot(
+        ['africa', 'arabia', 'india', 'india'], 
+        [21, 14, 12, 31], 
+        season, 
+        nrows=2, 
+        ncols=2, 
+        figsize=(13, 7.5),
+        filename=f'lifted_index_{season}_comparison_2x2'
+    )
