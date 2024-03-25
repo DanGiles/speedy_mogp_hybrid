@@ -112,8 +112,6 @@ def read_oro_var() -> np.ndarray:
 def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     T_mean = data[:,:,16:24]
     Q_mean = data[:,:,24:32]
-    Q_mean = np.flip(Q_mean, axis = 2)
-    T_mean = np.flip(T_mean, axis = 2)
     low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
     Q_mean[low_values_flags] = 1e-6
 
@@ -139,15 +137,15 @@ def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     return train
 
 
-def mogp_prediction(test, trained_gp, nlon, nlat, nlev):
-    variance, uncer, d = trained_gp.predict(test)
+def mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev):
+    variance, uncer, d = trained_gp.predict(mogp_inputs)
     print("Prediction")
     if GP_name == "gp_without_oro_var":
-        T_mean = test[:, 3:11]
-        Q_mean = test[:, 11:]
+        T_mean = mogp_inputs[:, 3:11]
+        Q_mean = mogp_inputs[:, 11:]
     elif GP_name == "gp_with_oro_var":
-        T_mean = test[:, 4:12]
-        Q_mean = test[:, 12:]
+        T_mean = mogp_inputs[:, 4:12]
+        Q_mean = mogp_inputs[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
@@ -162,9 +160,7 @@ def mogp_prediction(test, trained_gp, nlon, nlat, nlev):
     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
 
     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
-    resampled_T  = np.flip(resampled_T, axis = 2)
     resampled_Q = np.reshape(resampled_Q, (nlon, nlat, nlev))
-    resampled_Q  = np.flip(resampled_Q, axis = 2)
 
     return resampled_T, resampled_Q
 
@@ -216,9 +212,9 @@ def main():
 
         # Time to do the MOGP magic
         # Loop through all columns
-        test = data_prep(data, oro, lsm, nlon, nlat)
+        mogp_inputs = data_prep(data, oro, lsm, nlon, nlat)
         print("Data Prep")
-        resampled_T, resampled_Q = mogp_prediction(test, trained_gp, nlon, nlat, nlev)
+        resampled_T, resampled_Q = mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev)
         print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
         print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
         data[:,:,16:24] = resampled_T[:,:,:]

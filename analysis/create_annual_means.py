@@ -129,18 +129,18 @@ def get_index_mesh(lon_index_points: List[int], lat_index_points: List[int]):
 
 
 # only save the field means and variances
-def save_summaries(array, name, filename) -> None:
+def save_summaries(array, folder, filename) -> None:
     # calculate mean
     output_mean = np.mean(array, axis=-1)
     np.save(
-        os.path.join(analysis_root, name, f"mean_{filename}.npy"),
+        os.path.join(folder, f"mean_{filename}.npy"),
         output_mean
     )
 
     # calculate variance
     output_var = np.var(array, axis=-1)
     np.save(
-        os.path.join(analysis_root, name, f"var_{filename}.npy"),
+        os.path.join(folder, f"var_{filename}.npy"),
         output_var
     )
 
@@ -155,7 +155,7 @@ def save_summaries(array, name, filename) -> None:
 
     output_india = array[lon_index_india, lat_index_india, ...]
     np.save(
-        os.path.join(analysis_root, name, f"india_{filename}.npy"),
+        os.path.join(folder, f"india_{filename}.npy"),
         output_india
     )
 
@@ -169,7 +169,7 @@ def save_summaries(array, name, filename) -> None:
     )
     output_africa = array[lon_index_africa, lat_index_africa, ...]
     np.save(
-        os.path.join(analysis_root, name, f"africa_{filename}.npy"),
+        os.path.join(folder, f"africa_{filename}.npy"),
         output_africa
     )
 
@@ -182,12 +182,11 @@ def save_summaries(array, name, filename) -> None:
     )
     output_arabia = array[lon_index_arabia, lat_index_arabia, ...]
     np.save(
-        os.path.join(analysis_root, name, f"arabia_{filename}.npy"),
+        os.path.join(folder, f"arabia_{filename}.npy"),
         output_arabia
     )
 
-
-
+    return
 
 
 #######################################################
@@ -199,7 +198,7 @@ nlat = 48
 nlev = 8
 nrec = 10
 
-# Prepare the December, Janurary and February data
+# Prepare the December, January and February data
 months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
 
 # Time increments
@@ -222,6 +221,11 @@ print("all dates found!")
 
 n_files = len(filenames)
 
+output_dir = os.path.join(analysis_root, 'annual')
+
+if not os.path.isdir(output_dir):
+    os.mkdir(output_dir)
+
 #################### Hybrid ####################
 if HYBRID:
     print("Start Hybrid")
@@ -232,7 +236,7 @@ if HYBRID:
         n_files
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"HYBRID_{varname}_annual")
+        save_summaries(array, output_dir, f"HYBRID_{varname}_annual")
 
     # fluxes
     output = loop_through_flx(
@@ -241,26 +245,25 @@ if HYBRID:
         n_files
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"HYBRID_{varname}_annual")
+        save_summaries(array, output_dir, f"HYBRID_{varname}_annual")
 
 #################### SPEEDY ####################
 if SPEEDY:
     print("Start SPEEDY")
     # non-fluxes
     output = loop_through_grd(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        os.path.join(SPEEDY_root), 
         filenames, 
         n_files
     )
     for varname, array in output.items():
-        save_summaries(array, 'annual', f"SPEEDY_{varname}_annual")
+        save_summaries(array, output_dir, f"SPEEDY_{varname}_annual")
 
     #fluxes
     output = loop_through_flx(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        os.path.join(SPEEDY_root), 
         filenames, 
         n_files
     )
     for varname, array in output.items():
-        save_summaries(array, 'annual', f"SPEEDY_{varname}_annual")
-
+        save_summaries(array, output_dir, f"SPEEDY_{varname}_annual")

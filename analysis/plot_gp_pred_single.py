@@ -40,7 +40,7 @@ lat_vals = "-87.159 -83.479 -79.777 -76.070 -72.362 -68.652 -64.942 -61.232 -57.
 lat = np.array([float(val) for val in lat_vals.split()]) # to match SPEEDY
 lon_grid, lat_grid = np.meshgrid(lon, lat)
 
-pressure_levels = [30, 100, 200, 300, 500, 700, 850, 925] # hPa
+pressure_levels = [925, 850, 700, 500, 300, 200, 100, 30]
 
 for l in range(8):
     fig, axes = plt.subplots(

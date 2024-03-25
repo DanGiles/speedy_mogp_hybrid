@@ -10,35 +10,6 @@ import pickle
 from mogp import *
 from script_variables import *
 
-def check_total_water(Q, Qs, rho):
-    num = 0
-    for i in range(len(Q[:,0])):
-        water_content = np.sum(Q[i,:]*rho)
-        sample = np.sum(Qs[i,:]*rho)
-        diff = abs(sample - water_content)
-        if diff > 1e-3:
-            Qs[i,:] = Q[i,:]
-            num +=1
-    print("Number of physically inconsistent profiles (total water content) %i"%num)
-
-    return Qs
-
-
-def check_static_energy(Q, Qs, T, Ts):
-    num = 0
-    Cp = 1.005
-    Lv = 2260
-    for i in range(len(Q[:,0])):
-        static_energy = np.sum(Q[i,:]*Lv + Cp*T[i,:])
-        sample_static_energy = np.sum(Qs[i,:]*Lv + Cp*Ts[i,:])
-        diff = abs(sample_static_energy - static_energy)
-        if diff > 1.0:
-            Ts[i,:] = T[i,:]
-            num +=1
-    print("Number of physically inconsistent profiles (moist static energy) %i"%num)
-
-    return Ts
-
 
 def make_dir(path: str) -> None:
     #do not empty directory if it doesn't exist!
@@ -112,8 +83,6 @@ def read_oro_var() -> np.ndarray:
 def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     T_mean = data[:,:,16:24]
     Q_mean = data[:,:,24:32]
-    Q_mean = np.flip(Q_mean, axis = 2)
-    T_mean = np.flip(T_mean, axis = 2)
     low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
     Q_mean[low_values_flags] = 1e-6
 
@@ -139,36 +108,15 @@ def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     return train
 
 
-# def mogp_prediction(test, gp, nlon, nlat, nlev):
-
-#     variance, uncer, d = gp.predict(test)
-#     T_mean = test[:, 3:11]
-#     Q_mean = test[:, 11:]
-#     resampled_T = np.empty((nlon*nlat, nlev), dtype = np.float64)
-#     resampled_Q = np.empty((nlon*nlat, nlev), dtype = np.float64)
-
-#     low_values_flags = variance < 1e-6  # Where values are low
-#     variance[low_values_flags] = 0.0
-
-#     resampled_T = np.random.normal(T_mean.flatten(), variance[:8,:].T.flatten())
-#     resampled_Q = np.random.normal(Q_mean.flatten(), variance[8:,:].T.flatten())
-
-#     resampled_T = np.reshape(resampled_T.T, (nlon, nlat, nlev))
-#     resampled_T  = np.flip(resampled_T, axis = 2)
-#     resampled_Q = np.reshape(resampled_Q.T, (nlon, nlat, nlev))
-#     resampled_Q  = np.flip(resampled_Q, axis = 2)
-
-#     return resampled_T, resampled_Q
-
-def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
-    variance, uncer, d = trained_gp.predict(test)
+def mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev):
+    variance, uncer, d = trained_gp.predict(mogp_inputs)
     print("Prediction")
     if GP_name == "gp_without_oro_var":
-        T_mean = test[:, 3:11]
-        Q_mean = test[:, 11:]
+        T_mean = mogp_inputs[:, 3:11]
+        Q_mean = mogp_inputs[:, 11:]
     elif GP_name == "gp_with_oro_var":
-        T_mean = test[:, 4:12]
-        Q_mean = test[:, 12:]
+        T_mean = mogp_inputs[:, 4:12]
+        Q_mean = mogp_inputs[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
@@ -182,28 +130,14 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
     resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, nlev))
     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
 
-    # resampled_Q = check_total_water(Q_mean, resampled_Q, rho)
-    # resampled_T = check_static_energy(Q_mean, resampled_Q, T_mean, resampled_T)
-
     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
-    resampled_T  = np.flip(resampled_T, axis = 2)
     resampled_Q = np.reshape(resampled_Q, (nlon, nlat, nlev))
-    resampled_Q  = np.flip(resampled_Q, axis = 2)
 
     return variance, uncer, resampled_T, resampled_Q
 
-
-
 def main():
-    if TRAIN_GP:
-        # Train the GP Model
-        plot_folder = os.path.join("", "")
-        n_train = 500
-        print("Starting Training")
-        trained_gp, test_UM = train_mogp(plot_folder, n_train)
-    else:
-        # Read in pre-trained GP model
-        trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
+
+    trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
 
@@ -227,8 +161,6 @@ def main():
     lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
     lsm = np.flip(lsm, 1)
-    rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
-
     if GP_name == "gp_with_oro_var":
         oro = np.stack((oro, read_oro_var()), axis=2)
 
@@ -238,9 +170,9 @@ def main():
 
     # Time to do the MOGP magic
     # Loop through all columns
-    test = data_prep(data, oro, lsm, nlon, nlat)
+    mogp_input = data_prep(data, oro, lsm, nlon, nlat)
     print("Data Prep")
-    variance, uncer, resampled_T, resampled_Q = mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho)
+    variance, uncer, resampled_T, resampled_Q = mogp_prediction(mogp_input, trained_gp, nlon, nlat, nlev)
     print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
     print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
     data[:,:,16:24] = resampled_T[:,:,:]
