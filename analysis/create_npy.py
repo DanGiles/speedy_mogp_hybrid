@@ -242,50 +242,51 @@ if not os.path.isdir(analysis_root):
 #################### SPEEDY ####################
 if SPEEDY:
     print("Start SPEEDY")
-    make_dir(os.path.join(analysis_root, 'SPEEDY'))
+    make_dir(os.path.join(analysis_root, 'winter'))
     ################################
     ######## WINTER
 
     print("Start winter")
     # non-fluxes
     output = loop_through_grd(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        os.path.join(SPEEDY_root), 
         filenames_winter, 
         n_winter
     )
     for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_DJF")
+        save_summaries(array, 'winter', f"SPEEDY_{varname}_DJF")
 
     #fluxes
     output = loop_through_flx(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        os.path.join(SPEEDY_root), 
         filenames_winter, 
         n_winter
     )
     for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_DJF")
+        save_summaries(array, 'winter', f"SPEEDY_{varname}_DJF")
     
     ################################
     ######## SUMMER
 
     print("Start summer")
+    make_dir(os.path.join(analysis_root, 'summer'))
     # non-fluxes
     output = loop_through_grd(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        os.path.join(SPEEDY_root), 
         filenames_summer, 
         n_summer
     )
     for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_JJA")
+        save_summaries(array, 'summer', f"SPEEDY_{varname}_JJA")
 
     # fluxes
     output = loop_through_flx(
-        os.path.join(SPEEDY_root, "DATA", "nature"), 
+        os.path.join(SPEEDY_root), 
         filenames_summer, 
         n_summer
     )
     for varname, array in output.items():
-        save_summaries(array, 'SPEEDY', f"{varname}_JJA")
+        save_summaries(array, 'summer', f"SPEEDY_{varname}_JJA")
 
 
 
@@ -293,7 +294,7 @@ if SPEEDY:
 #################### Hybrid ####################
 if HYBRID:
     print("Start Hybrid")
-    make_dir(os.path.join(analysis_root, GP_name))
+    # make_dir(os.path.join(analysis_root, GP_name))
     data_folder = os.path.join(HYBRID_data_root, GP_name)
     ################################
     ######## WINTER
@@ -306,7 +307,7 @@ if HYBRID:
         n_winter
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_DJF")
+        save_summaries(array, 'winter', f"HYBIRD_{varname}_DJF")
 
     # fluxes
     output = loop_through_flx(
@@ -315,7 +316,7 @@ if HYBRID:
         n_winter
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_DJF")
+        save_summaries(array, 'winter', f"HYBIRD_{varname}_DJF")
     
     ################################
     ######## SUMMER
@@ -328,7 +329,7 @@ if HYBRID:
         n_summer
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_JJA")
+        save_summaries(array, 'summer', f"HYBIRD_{varname}_JJA")
 
     # fluxes
     output = loop_through_flx(
@@ -337,4 +338,4 @@ if HYBRID:
         n_summer
     )
     for varname, array in output.items():
-        save_summaries(array, GP_name, f"{varname}_JJA")
+        save_summaries(array, 'summer', f"HYBIRD_{varname}_JJA")
