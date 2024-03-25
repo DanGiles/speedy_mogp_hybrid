@@ -143,7 +143,7 @@ def hypercube(
     Y_train = Y[:, :, cell_indices, site_indices, time_indices]
     if GP_name == "gp_without_oro_var":
         oro_train = oro[0, cell_indices, site_indices]
-    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
+    elif GP_name == "gp_with_oro_var":
         oro_train = oro[:, cell_indices, site_indices]
     else:
         raise Exception("GP_name not recognised.")
@@ -157,7 +157,7 @@ def hypercube(
     Y_test = Y[:, :, cell_indices, site_indices, time_indices]
     if GP_name == "gp_without_oro_var":
         oro_test = oro[0, cell_indices, site_indices]
-    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
+    elif GP_name == "gp_with_oro_var":
         oro_test = oro[:, cell_indices, site_indices]
     else:
         raise Exception("GP_name not recognised.")
@@ -189,7 +189,7 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
         train[2, :] = ls    #land-sea ratio
         train[3:11, :] = X[0, :, :] #AVG air temp at desired levels
         train[11:, :] = X[1, :, :]  #AVG humudity at desired levels
-    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
+    elif GP_name == "gp_with_oro_var":
         train = np.empty((20, X.shape[2]), dtype = np.float64)
 
         train[0, :] = X_ps  #surface level AVG air pressure

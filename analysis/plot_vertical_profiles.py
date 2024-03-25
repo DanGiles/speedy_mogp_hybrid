@@ -62,7 +62,7 @@ def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
         train[:, 2] = ls.flatten()
         train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
         train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
-    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
+    elif GP_name == "gp_with_oro_var":
         # Version for gp_with_oro_var
         train = np.empty(((nlon*nlat),20), dtype = np.float64)
         train[:, 0] = data[:,:,32].flatten()
@@ -116,7 +116,7 @@ def mogp_prediction_conserving(test, trained_gp, nlon, nlat, nlev, rho):
     if GP_name == "gp_without_oro_var":
         T_mean = test[:, 3:11]
         Q_mean = test[:, 11:]
-    elif GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
+    elif GP_name == "gp_with_oro_var":
         T_mean = test[:, 4:12]
         Q_mean = test[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
@@ -169,7 +169,7 @@ lsm = read_const_grd(os.path.join(SPEEDY_root, "model","data","bc","t30","clim",
 oro = np.flip(oro, 1)
 lsm = np.flip(lsm, 1)
 rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
-if GP_name == "gp_with_oro_var" or GP_name == "gp_with_oro_var_stratified":
+if GP_name == "gp_with_oro_var" or GP_name:
     oro = np.stack((oro, read_oro_var()), axis=2)
 
 test = data_prep(data, oro, lsm, nlon, nlat)
