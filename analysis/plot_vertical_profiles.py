@@ -169,7 +169,7 @@ lsm = read_const_grd(os.path.join(SPEEDY_root, "model","data","bc","t30","clim",
 oro = np.flip(oro, 1)
 lsm = np.flip(lsm, 1)
 rho = np.loadtxt(os.path.join(HYBRID_root, "src", "density.txt"))
-if GP_name == "gp_with_oro_var" or GP_name:
+if GP_name == "gp_with_oro_var":
     oro = np.stack((oro, read_oro_var()), axis=2)
 
 test = data_prep(data, oro, lsm, nlon, nlat)
