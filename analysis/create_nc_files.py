@@ -71,8 +71,10 @@ def read_files_2_nc(folder, n_files):
     ds_t = xr.Dataset()
     ds_q = xr.Dataset()
     ds_ps = xr.Dataset()
+    ds_precip = xr.Dataset()
 
     ps = []
+    precip = []
     T = [[] for _ in range(8)]
     Q = [[] for _ in range(8)]
 
@@ -85,6 +87,7 @@ def read_files_2_nc(folder, n_files):
             # Create a DataArray for each level along the 'z' dimension
             fdata = read_grd(f)
             ps.append(fdata[:, :, 32])
+            precip.append(fdata[:, :, 32])
             for z in range(8):
                 T[z].append(fdata[:, :, z+16])
             for z in range(8):
@@ -104,8 +107,12 @@ def read_files_2_nc(folder, n_files):
     var_name = f'ps'
     da_ps = xr.DataArray(np.stack(ps, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_ps[var_name] = da_ps
+
+    var_name = f'precip'
+    da_precip = xr.DataArray(np.stack(ps, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    ds_precip[var_name] = da_precip
     
-    return ds_t, ds_q, ds_ps
+    return ds_t, ds_q, ds_ps, ds_precip
 #######################################################
 # Find the file names
 
@@ -148,8 +155,9 @@ if not os.path.isdir(output_dir):
 # if HYBRID:
     print("Start HYBRID")
     # Set the directory where the Fortran binary files are located
-    ds_t, ds_q, ds_ps = read_files_2_nc(os.path.join(HYBRID_data_root, GP_name), n_files)
+    ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(HYBRID_data_root, GP_name), n_files)
     # Write the Dataset to a netCDF4 file
+    ds_precip.to_netcdf(os.path.join(output_dir,'HYBRID_precip.nc'), engine='netcdf4')
     ds_ps.to_netcdf(os.path.join(output_dir,'HYBRID_ps.nc'), engine='netcdf4')
     ds_t.to_netcdf(os.path.join(output_dir,'HYBRID_T.nc'), engine='netcdf4')
     ds_q.to_netcdf(os.path.join(output_dir,'HYBRID_Q.nc'), engine='netcdf4')
@@ -157,8 +165,9 @@ if not os.path.isdir(output_dir):
 if SPEEDY:
     print("Start SPEEDY")
     # Set the directory where the Fortran binary files are located
-    ds_t, ds_q, ds_ps = read_files_2_nc(os.path.join(SPEEDY_root), n_files)
+    ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(SPEEDY_root), n_files)
     # Write the Dataset to a netCDF4 file
+    ds_precip.to_netcdf(os.path.join(output_dir,'SPEEDY_precip.nc'), engine='netcdf4')
     ds_ps.to_netcdf(os.path.join(output_dir,'SPEEDY_ps.nc'), engine='netcdf4')
     ds_t.to_netcdf(os.path.join(output_dir,'SPEEDY_T.nc'), engine='netcdf4')
     ds_q.to_netcdf(os.path.join(output_dir,'SPEEDY_Q.nc'), engine='netcdf4')
