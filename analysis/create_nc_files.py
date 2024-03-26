@@ -87,7 +87,7 @@ def read_files_2_nc(folder, n_files):
             # Create a DataArray for each level along the 'z' dimension
             fdata = read_grd(f)
             ps.append(fdata[:, :, 32])
-            precip.append(fdata[:, :, 32])
+            precip.append(fdata[:, :, 33])
             for z in range(8):
                 T[z].append(fdata[:, :, z+16])
             for z in range(8):
@@ -152,7 +152,7 @@ if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 #################### Hybrid ####################
-# if HYBRID:
+if HYBRID:
     print("Start HYBRID")
     # Set the directory where the Fortran binary files are located
     ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(HYBRID_data_root, GP_name), n_files)
