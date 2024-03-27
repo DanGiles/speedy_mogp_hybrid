@@ -45,7 +45,7 @@ for loc in poi:
         1, 1, 
         figsize=(8, 8)
     )
-    fig.suptitle(f'Lifted Index Histogram \n Location: {lons[lon], lats[lat]}.')
+    fig.suptitle(f'Precipitation \n Location: {lons[lon], lats[lat]}.')
 
     y1, x1, _ = ax.hist(precip_SPEEDY, bins=bin_points, alpha=0.5, label="SPEEDY")
     y2, x2, _ = ax.hist(precip_HYBRID, bins=bin_points, alpha=0.5, label="Hybrid")

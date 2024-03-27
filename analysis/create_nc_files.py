@@ -109,7 +109,7 @@ def read_files_2_nc(folder, n_files):
     ds_ps[var_name] = da_ps
 
     var_name = f'precip'
-    da_precip = xr.DataArray(np.stack(ps, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    da_precip = xr.DataArray(np.stack(precip, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_precip[var_name] = da_precip
     
     return ds_t, ds_q, ds_ps, ds_precip
