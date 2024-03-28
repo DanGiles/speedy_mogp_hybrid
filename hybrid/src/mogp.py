@@ -40,7 +40,7 @@ def plot_mogp_predictions(
     axes[0].errorbar(
         (MOGP_t_var), 
         pressure_levels,
-        xerr=np.maximum(0, MOGP_t_var+sigma*MOGP_t_unc), 
+        xerr= abs(sigma*MOGP_t_unc), 
         fmt='o',
         label="MOGP"
     )
@@ -58,7 +58,7 @@ def plot_mogp_predictions(
     axes[1].errorbar(
         (MOGP_q_var), 
         pressure_levels,
-        xerr=np.maximum(0, MOGP_q_var+sigma*MOGP_q_unc), 
+        xerr=abs(sigma*MOGP_q_unc), 
         fmt='o',
         label="MOGP"
     )
@@ -235,13 +235,13 @@ def train_mogp():
     test_input, test_target = data_prep(X_test, X_test_ps, oro_test, ls_test, Y_test)
     print("test and truth", test_input.shape, test_target.shape)
     # Loading the trained mogp from file. Not needed but used to test implementation
-    np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
-    np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
+    # np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
+    # np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
     # test_target = np.load(os.path.join(gp_directory_root, "test_target.npy"))
     # Predict using the MOGP
     stds, uncer, d = gp.predict(test_input.T)
-    np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
-    np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
+    # np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
+    # np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
 
     # stds = np.load(os.path.join(gp_directory_root, "stds.npy"))
     # uncer = np.load(os.path.join(gp_directory_root, "uncer.npy"))
