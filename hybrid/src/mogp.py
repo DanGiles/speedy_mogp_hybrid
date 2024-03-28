@@ -40,7 +40,7 @@ def plot_mogp_predictions(
     axes[0].errorbar(
         (MOGP_t_var), 
         pressure_levels,
-        xerr= abs(sigma*MOGP_t_unc), 
+        xerr=np.maximum(0, sigma*MOGP_t_unc), 
         fmt='o',
         label="MOGP"
     )
@@ -58,7 +58,7 @@ def plot_mogp_predictions(
     axes[1].errorbar(
         (MOGP_q_var), 
         pressure_levels,
-        xerr=abs(sigma*MOGP_q_unc), 
+        xerr=np.maximum(0, sigma*MOGP_q_unc), 
         fmt='o',
         label="MOGP"
     )
