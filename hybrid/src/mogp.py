@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 
 from script_variables import *
 
-processed_data_root =   '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/processed' #Path to your .npy files from data_prep routine
-pngs_root =             '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/' #Path to where the pngs will be saved to
-gp_directory_root =     '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/GP-dumps/' #Path to your gp.pkl files
+# processed_data_root =   '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/processed' #Path to your .npy files from data_prep routine
+# pngs_root =             '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/' #Path to where the pngs will be saved to
+# gp_directory_root =     '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/GP-dumps/' #Path to your gp.pkl files
 
 def plot_mogp_predictions(
     UM_t_var, 
