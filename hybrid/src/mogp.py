@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 
 from script_variables import *
 
+processed_data_root =   '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/processed' #Path to your .npy files from data_prep routine
+pngs_root =             '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/pngs/' #Path to where the pngs will be saved to
+gp_directory_root =     '/Users/jamesbriant/Documents/Projects/ml_climate_fusion/data/GP-dumps/' #Path to your gp.pkl files
 
 def plot_mogp_predictions(
     UM_t_var, 
@@ -40,7 +43,8 @@ def plot_mogp_predictions(
     axes[0].errorbar(
         (MOGP_t_var), 
         pressure_levels,
-        xerr=np.maximum(0, MOGP_t_var+sigma*MOGP_t_unc), 
+        # xerr=np.maximum(0, MOGP_t_var+sigma*MOGP_t_unc), 
+        xerr=np.maximum(0, sigma*MOGP_t_unc), 
         fmt='o',
         label="MOGP"
     )
@@ -51,14 +55,15 @@ def plot_mogp_predictions(
         color='red', 
         label="UM 'Truth'"
     )
-    axes[0].set_xlim(left=0.)
+    # axes[0].set_xlim(left=0.)
     axes[0].set_ylim(bottom=1000., top=0.)
 
     axes[1].set_title('Specific Humidity / kg/kg')
     axes[1].errorbar(
         (MOGP_q_var), 
         pressure_levels,
-        xerr=np.maximum(0, MOGP_q_var+sigma*MOGP_q_unc), 
+        # xerr=np.maximum(0, MOGP_q_var+sigma*MOGP_q_unc), 
+        xerr=np.maximum(0, sigma*MOGP_q_unc), 
         fmt='o',
         label="MOGP"
     )
@@ -69,7 +74,7 @@ def plot_mogp_predictions(
         color='red', 
         label="UM 'Truth'"
     )
-    axes[1].set_xlim(left=0.)
+    # axes[1].set_xlim(left=0.)
     axes[1].set_ylim(bottom=1000., top=0.)
 
     fig.supxlabel("Standard Deviation")
@@ -181,6 +186,12 @@ def loop_through_days(processed_data_root):
 
     return X, Y
 
+# def standardize_data(X: np.ndarray) -> Tuple[np.ndarray]:
+#     X_mean = np.mean(X, axis=1, keepdims=True)
+#     X_std = np.std(X, axis=1, keepdims=True)
+#     X = (X - X_mean) / X_std
+#     return X, X_mean, X_std
+
 def train_mogp():
 
     X, Y = loop_through_days(processed_data_root)
@@ -199,7 +210,7 @@ def train_mogp():
     X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=1)
     X_test, Y_test, oro_test, ls_test, test_indices = sampler(X, Y, oro, land_sea, n_size=1)
 
-    # #extract air temp (and humidity) at desired levels at all locations
+    ##### extract air temp (and humidity) at desired levels at all locations
     # print("Cropping arrays")
     X_train, Y_train = map_to_speedy_pressure_levels(X_train, Y_train)
     X_test, Y_test = map_to_speedy_pressure_levels(X_test, Y_test)
@@ -210,41 +221,82 @@ def train_mogp():
     X_train_ps = X_train[0, 0, :]
     X_test_ps = X_test[0, 0, :]
 
-    # # # Setting up the training dataset
+    ##### Setting up the training dataset #####
     train_input, train_target = data_prep(X_train, X_train_ps, oro_train, ls_train, Y_train)
-    # # input = np.load(os.path.join(output_folder, "input.npy"))
-    # # target = np.load(os.path.join(output_folder, "target.npy"))
-    print("input and target", train_input.shape, train_target.shape)
-    # # np.save(os.path.join(output_folder, "input.npy"), input)
-    # # np.save(os.path.join(output_folder, "target.npy"), target)
 
-    # This switch is primarily used for my testing
+    # input = np.load(os.path.join(output_folder, "input.npy"))
+    # target = np.load(os.path.join(output_folder, "target.npy"))
+    print("input and target", train_input.shape, train_target.shape)
+
+    ##### Standardizing the data #####
+    # train_input_standardized, train_input_mean, train_input_std = standardize_data(train_input)
+    # train_target_standardized, train_target_mean, train_target_std = standardize_data(train_target)
+    print(train_input[:,0])
+
+    ##### This switch is primarily used for testing purposes #####
     if TRAIN_GP is True:
-        # # Defining and fitting the MOGP
-        gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52", nugget='adaptive')
+        ##### Defining and fitting the MOGP #####
+        gp = mogp_emulator.MultiOutputGP(
+            train_input.T, 
+            train_target, 
+            kernel="Matern52", 
+            nugget='adaptive'
+        )
+        # gp = mogp_emulator.MultiOutputGP(
+        #     train_input_standardized.T, 
+        #     train_target_standardized, 
+        #     kernel="Matern52", 
+        #     nugget='adaptive'
+        # )
+        # gp = mogp_emulator.MultiOutputGP(
+        #     train_input.T, 
+        #     train_target, 
+        #     kernel="Matern52", 
+        #     nugget=0.0
+        # )
+        # gp = mogp_emulator.MultiOutputGP(
+        #     train_input_standardized.T, 
+        #     train_target_standardized, 
+        #     kernel="Matern52", 
+        #     nugget=0.0
+        # )
         gp = mogp_emulator.fit_GP_MAP(gp)
-        # # Save the trained mogp
+
+        ##### Save the trained mogp to file #####
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "wb"))
+
+        ##### Save the NON-STANDARIZED training dataset to file #####
+        np.save(os.path.join(gp_directory_root, "train_input.npy"), train_input)
+        np.save(os.path.join(gp_directory_root, "train_target.npy"), train_target)
     else:
-        #Read in the pre-trained GP
+        ##### Read in the pre-trained GP #####
         print(gp_directory_root)
         gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
 
 
-    # # Setting up the testing dataset
+    ##### Setting up the testing dataset #####
     test_input, test_target = data_prep(X_test, X_test_ps, oro_test, ls_test, Y_test)
+    ##### Standardizing the data #####
+    # test_input, test_input_mean, test_input_std = standardize_data(test_input)
+    # test_target, test_target_mean, test_target_std = standardize_data(test_target)
+    # test_input_standardized = (test_input - train_input_mean) / train_input_std
+
     print("test and truth", test_input.shape, test_target.shape)
-    # Loading the trained mogp from file. Not needed but used to test implementation
+    ##### Loading the trained mogp from file. Not needed but used to test implementation
     np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
     np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
     # test_target = np.load(os.path.join(gp_directory_root, "test_target.npy"))
-    # Predict using the MOGP
+    
+    ##### Predict using the MOGP #####
+    # stds, uncer, d = gp.predict(test_input_standardized.T)
     stds, uncer, d = gp.predict(test_input.T)
-    np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
-    np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
+    # # stds = stds*train_target_std + train_target_mean
+    # # uncer = uncer*train_target_std
+    # np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
+    # np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
 
-    # stds = np.load(os.path.join(gp_directory_root, "stds.npy"))
-    # uncer = np.load(os.path.join(gp_directory_root, "uncer.npy"))
+    # # stds = np.load(os.path.join(gp_directory_root, "stds.npy"))
+    # # uncer = np.load(os.path.join(gp_directory_root, "uncer.npy"))
     output_path = os.path.join(pngs_root, GP_name)
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
@@ -261,6 +313,36 @@ def train_mogp():
             test_indices[test_index, 0, :],
             output_path
         )
+        # plot_mogp_predictions(
+        #     test_target[:8, test_index]-np.squeeze(train_target_mean[:8]),
+        #     test_target[8:, test_index]-np.squeeze(train_target_mean[8:]),
+        #     stds[:8, test_index], uncer[:8, test_index],
+        #     stds[8:, test_index], uncer[8:, test_index],
+        #     test_index,
+        #     test_indices[test_index, 0, :],
+        #     output_path
+        # )
+
+    # ##### Testing on the training dataset #####
+    # stds, uncer, d = gp.predict(train_input.T)
+    # stds, uncer, d = gp.predict(train_input_standardized.T)
+    # # stds = stds*train_target_std + train_target_mean
+    # # uncer = uncer*train_target_std
+
+    # output_path = os.path.join(output_path, "train")
+    # if not os.path.isdir(output_path):
+    #     os.mkdir(output_path)
+    # print(train_input[:,0])
+    # for test_index in range(train_target.shape[1]):
+    #     plot_mogp_predictions(
+    #         train_target[:8, test_index]-np.squeeze(train_target_mean[:8]),
+    #         train_target[8:, test_index]-np.squeeze(train_target_mean[8:]),
+    #         stds[:8, test_index], uncer[:8, test_index],
+    #         stds[8:, test_index], uncer[8:, test_index],
+    #         test_index,
+    #         train_indices[test_index, 0, :],
+    #         output_path
+    #     )
 
 
 if __name__ == '__main__':
