@@ -65,6 +65,27 @@ def read_flx(filename) -> np.ndarray:
     # data = data.astype(np.float64)
     return data
 
+def read_files_2_precip_nc(folder, n_files):
+    # Loop through all the Fortran binary files
+
+    ds_precip = xr.Dataset()
+    precip = []
+    # for date in filenames:              
+    for filename in os.listdir(folder):
+        f = os.path.join(folder, filename)
+        # checking if it is a file and if correct date
+        if os.path.isfile(f) and "grd" in f and "fluxes.grd" not in f:
+        # if os.path.isfile(f) and date in f and "_fluxes.grd" not in f:
+            # Create a DataArray for each level along the 'z' dimension
+            fdata = read_grd(f)
+            precip.append(fdata[:, :, 33])
+
+    var_name = f'precip'
+    da_precip = xr.DataArray(np.stack(precip, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    ds_precip[var_name] = da_precip
+    
+    return ds_precip
+
 
 def read_files_2_nc(folder, n_files):
     # Loop through all the Fortran binary files
@@ -147,6 +168,7 @@ n_files = len(filenames)
 print(n_files)
 output_dir = os.path.join(analysis_root, 'annual')
 
+full_fields = False
 
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
@@ -155,20 +177,34 @@ if not os.path.isdir(output_dir):
 if HYBRID:
     print("Start HYBRID")
     # Set the directory where the Fortran binary files are located
-    ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(HYBRID_data_root, GP_name), n_files)
-    # Write the Dataset to a netCDF4 file
-    ds_precip.to_netcdf(os.path.join(output_dir,'HYBRID_precip.nc'), engine='netcdf4')
-    ds_ps.to_netcdf(os.path.join(output_dir,'HYBRID_ps.nc'), engine='netcdf4')
-    ds_t.to_netcdf(os.path.join(output_dir,'HYBRID_T.nc'), engine='netcdf4')
-    ds_q.to_netcdf(os.path.join(output_dir,'HYBRID_Q.nc'), engine='netcdf4')
+    if full_fields:
+        ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(HYBRID_data_root, GP_name), n_files)
+        ds_precip.to_netcdf(os.path.join(output_dir,'HYBRID_precip.nc'), engine='netcdf4')
+        ds_ps.to_netcdf(os.path.join(output_dir,'HYBRID_ps.nc'), engine='netcdf4')
+        ds_t.to_netcdf(os.path.join(output_dir,'HYBRID_T.nc'), engine='netcdf4')
+        ds_q.to_netcdf(os.path.join(output_dir,'HYBRID_Q.nc'), engine='netcdf4')
+    else:
+        ds_precip = read_files_2_precip_nc(os.path.join(HYBRID_data_root, GP_name), n_files)
+        # Write the Dataset to a netCDF4 file
+        ds_precip.to_netcdf(os.path.join(output_dir,'HYBRID_precip.nc'), engine='netcdf4')
+    # ds_ps.to_netcdf(os.path.join(output_dir,'HYBRID_ps.nc'), engine='netcdf4')
+    # ds_t.to_netcdf(os.path.join(output_dir,'HYBRID_T.nc'), engine='netcdf4')
+    # ds_q.to_netcdf(os.path.join(output_dir,'HYBRID_Q.nc'), engine='netcdf4')
 #################### SPEEDY ####################
 if SPEEDY:
     print("Start SPEEDY")
     # Set the directory where the Fortran binary files are located
-    ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(SPEEDY_root), n_files)
-    # Write the Dataset to a netCDF4 file
-    ds_precip.to_netcdf(os.path.join(output_dir,'SPEEDY_precip.nc'), engine='netcdf4')
-    ds_ps.to_netcdf(os.path.join(output_dir,'SPEEDY_ps.nc'), engine='netcdf4')
-    ds_t.to_netcdf(os.path.join(output_dir,'SPEEDY_T.nc'), engine='netcdf4')
-    ds_q.to_netcdf(os.path.join(output_dir,'SPEEDY_Q.nc'), engine='netcdf4')
+    if full_fields:
+        ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(os.path.join(SPEEDY_root), n_files)
+        ds_precip.to_netcdf(os.path.join(output_dir,'SPEEDY_precip.nc'), engine='netcdf4')
+        ds_ps.to_netcdf(os.path.join(output_dir,'SPEEDY_ps.nc'), engine='netcdf4')
+        ds_t.to_netcdf(os.path.join(output_dir,'SPEEDY_T.nc'), engine='netcdf4')
+        ds_q.to_netcdf(os.path.join(output_dir,'SPEEDY_Q.nc'), engine='netcdf4')
+    else:
+        ds_precip = read_files_2_precip_nc(os.path.join(SPEEDY_root), n_files)
+        # Write the Dataset to a netCDF4 file
+        ds_precip.to_netcdf(os.path.join(output_dir,'SPEEDY_precip.nc'), engine='netcdf4')
+    # ds_ps.to_netcdf(os.path.join(output_dir,'SPEEDY_ps.nc'), engine='netcdf4')
+    # ds_t.to_netcdf(os.path.join(output_dir,'SPEEDY_T.nc'), engine='netcdf4')
+    # ds_q.to_netcdf(os.path.join(output_dir,'SPEEDY_Q.nc'), engine='netcdf4')
 
