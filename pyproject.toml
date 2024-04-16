@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "speedy-mogp-hybrid"
+version = "0.1.0"
+description = "Hybrid climate modelling" 
+authors = ["Your Name <you@example.com>"]
+license = ""
+readme = "README.md"
+package-mode = false
+
+
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+mogp-emulator = "0.6.0"
+cloudpickle = "2.0.0"
+matplotlib = "^3.8.4"
+netcdf4 = "^1.6.5"
+numpy = "^1.26.4"
+cartopy = "^0.23.0"
+xarray = "^2024.3.0"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
