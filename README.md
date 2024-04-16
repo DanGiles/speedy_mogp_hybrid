@@ -2,6 +2,11 @@ Variance predictions of atmospheric variables
 
 The steps in this guide should be followed in order.
 
+## To set up the environment
+- Install Python 3.10 (e.g. using [pyenv](https://github.com/pyenv/pyenv))
+- Install [Poetry](https://python-poetry.org/)
+- Run `poetry install`
+
 # 1. Data Prep
 
 ## Prior to running data prep
