@@ -25,8 +25,8 @@ output_path = os.path.join(output_path, 'lifted_index')
 if not os.path.isdir(output_path):
     os.mkdir(output_path)
 
-seasons = ['DJF', 'JJA']
-locations = ['africa', 'india']
+seasons = ['annual']
+locations = ['arabia']
 
 nlon = 96
 nlat = 48
@@ -68,6 +68,13 @@ lon_index_africa, lat_index_africa, n_points['africa'] = get_index_mesh(
     lat_index_africa_points
 )
 
+lon_index_arabia_points = [13, 14, 15, 16]
+lat_index_arabia_points = [28, 27, 26, 25, 24, 23, 22]
+
+lon_index_africa, lat_index_africa, n_points['arabia'] = get_index_mesh(
+    lon_index_arabia_points,
+    lat_index_arabia_points
+)
 
 def round_nearest_half(x):
     return round(x * 2.0)/2
@@ -251,37 +258,13 @@ def plot_LI_vs_precip(counted_LI, precip, title):
     plt.close()
 
 
-lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
-lsm = np.flip(lsm.T, 0)
-
 
 for season in seasons:
-    print(season)
-
-    counted_LI_m2 = {}
-    counted_LI_m4 = {}
-    counted_LI_m6 = {}
-    # counted_LI_p2 = {}
-
-    precip = {}
-
-    speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"mean_precip_{season}.npy"))
-    hybrid = np.load(os.path.join(analysis_root, GP_name, f"mean_precip_{season}.npy"))
-    diff = hybrid - speedy
-    precip['india'] = diff[lon_index_india, lat_index_india]
-    precip['africa'] = diff[lon_index_africa, lat_index_africa]
-
     for location_i, location in enumerate(locations):
         print(location)
 
-        speedy = np.load(os.path.join(analysis_root, 'SPEEDY', f"{location}_lifted_index_{season}.npy"))
-        hybrid = np.load(os.path.join(analysis_root, GP_name, f"{location}_lifted_index_{season}.npy"))
-
-        # save the lifted index counts for <-2, <-4 and <-6.
-        counted_LI_m2[location] = np.zeros((n_points[location]), dtype=int)
-        counted_LI_m4[location] = np.zeros((n_points[location]), dtype=int)
-        counted_LI_m6[location] = np.zeros((n_points[location]), dtype=int)
-        # counted_LI_p2[location] = np.zeros((n_points[location]), dtype=int)
+        speedy = np.load(os.path.join(analysis_root, "annual", f'{location}_SPEEDY_lifted_index_annual.npy'))
+        hybrid = np.load(os.path.join(analysis_root, 'annual', f'{location}_HYBRID_lifted_index_annual.npy'))
 
         for point in range(n_points[location]):
             LI_SPEEDY = speedy[point, :]
@@ -295,11 +278,6 @@ for season in seasons:
             if np.max(LI_HYBRID)>9000:
                 # print(f'{season} - {location}, point {point+1} - Hybrid: {np.sum(LI_HYBRID>9000)}')
                 LI_HYBRID = LI_HYBRID[LI_HYBRID < 9000]
-
-            counted_LI_m2[location][point] = np.sum(LI_HYBRID <= -2) - np.sum(LI_SPEEDY <= -2)
-            counted_LI_m4[location][point] = np.sum(LI_HYBRID <= -4) - np.sum(LI_SPEEDY <= -4)
-            counted_LI_m6[location][point] = np.sum(LI_HYBRID <= -6) - np.sum(LI_SPEEDY <= -6)
-            # counted_LI_p2[location][point] = np.sum(LI_HYBRID >= 2) - np.sum(LI_SPEEDY >= 2)
 
             bin_min = round_nearest_half(min(np.min(LI_SPEEDY), np.min(LI_HYBRID)))
             bin_max = round_nearest_half(max(np.max(LI_SPEEDY), np.max(LI_HYBRID)))
@@ -330,20 +308,7 @@ for season in seasons:
             ax.legend()
             
             plt.savefig(
-                os.path.join(output_path, f'{location}_{point+1}_{season}_lifted_index.png')
+                os.path.join(output_path, f'{location}_{point+1}_{season}.png')
             )
             plt.close()
-        
     
-    # MINUS 2
-    plot_scatter_wrapper(counted_LI_m2, "-2")
-    plot_pcolormesh_scatter_wrapper(counted_LI_m2, "-2")
-    plot_LI_vs_precip(counted_LI_m2, precip, "-2")
-    # MINUS 4
-    plot_scatter_wrapper(counted_LI_m4, "-4")
-    plot_pcolormesh_scatter_wrapper(counted_LI_m4, "-4")
-    plot_LI_vs_precip(counted_LI_m4, precip, "-4")
-    # MINUS 6
-    plot_scatter_wrapper(counted_LI_m6, "-6")
-    plot_pcolormesh_scatter_wrapper(counted_LI_m6, "-6")
-    plot_LI_vs_precip(counted_LI_m6, precip, "-6")
