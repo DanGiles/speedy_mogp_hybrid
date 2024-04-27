@@ -15,15 +15,14 @@ def plot_map(ax, field_data, title, heatmap=None, **kwargs):
     ax.set_title(title)
     return heatmap
 
-
 oneshot_dir = os.path.join(HYBRID_data_root, "oneshot")
 # Set up the grid
 nlon = 96
 nlat = 48
 nlev = 8
 # Set the dates
-IDate = "1987060100"
-# IDate = "1987010100"
+# IDate = "1987060100"
+IDate = "1987010100"
 
 variance = np.load(os.path.join(oneshot_dir, f"{IDate}_variance.npy"))
 # Load in the GP predictions
@@ -31,7 +30,7 @@ T_var = variance[:8,:].T
 Q_var = variance[8:,:].T
 
 T_var = np.reshape(T_var, (nlon, nlat, nlev))
-Q_var = np.reshape(Q_var, (nlon, nlat, nlev))
+Q_var = np.reshape(Q_var, (nlon, nlat, 5))
 
 # Set up the coordinate system
 lon = np.linspace(-180, 180, nlon, endpoint=False) # endpoint=False to match SPEEDY
@@ -42,7 +41,7 @@ lon_grid, lat_grid = np.meshgrid(lon, lat)
 
 pressure_levels = [925, 850, 700, 500, 300, 200, 100, 30]
 
-for l in range(8):
+for l in range(5):
     fig, axes = plt.subplots(
         nrows=2, 
         ncols=1,
