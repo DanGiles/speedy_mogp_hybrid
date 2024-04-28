@@ -13,7 +13,7 @@ def plot_map(ax, field_data, title, unit, min , max, i) -> None:
         vmin = int(np.floor(min))
         vmax = int(np.ceil(max))
         diff = vmax - vmin
-        boundaries = np.linspace(vmin, vmax + 1, diff*2)
+        boundaries = np.arange(vmin, vmax + 1)
     else:
         vmin = min
         vmax = max
@@ -29,14 +29,14 @@ def plot_map(ax, field_data, title, unit, min , max, i) -> None:
     )
     ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
-    cbar = plt.colorbar(heatmap, ax=ax)
-    cbar.ax.set_ylabel(f'{unit}')
+    cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=20)
+    cbar.ax.set_xlabel(f'{unit}')
     ax.set_xlabel(r'Longitude ($^{\circ}$)')
     ax.set_ylabel(r'Latitude ($^{\circ}$)')
     ax.set_title(title)
 
 
-hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_2/annual"
+hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
 speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
 ERA5_path = "/home/dan/Documents/speedy_mogp_hybrid/ERA5"
 
@@ -48,13 +48,13 @@ lat = np.array([float(val) for val in lat_vals.split()])
 speedy_lon_grid, speedy_lat_grid = np.meshgrid(lon, lat)
 
 runs = ['HYBRID', 'SPEEDY']
-fields = ['precip', 'cloudc']
-era_field = ['precipitation', 'cloudc']
-field_names = ['Precipitation', 'Cloud Cover']
-units = ['mm/day', 'fraction']
+fields = ['precip']
+era_field = ['precipitation']
+field_names = ['Precipitation']
+units = ['mm/day']
 
 fig = plt.figure(figsize=(17, 11))
-gs = fig.add_gridspec(2, 2)
+gs = fig.add_gridspec(2, 6)
 
 for i, field in enumerate(fields):
     hybrid = xr.load_dataset(os.path.join(hybrid_path, f'{runs[0]}_{field}.nc'))[field]
@@ -77,21 +77,21 @@ for i, field in enumerate(fields):
     lon_grid, lat_grid = np.meshgrid(era5.longitude, era5.latitude+90)
 
     weighted_lat = np.sin(np.deg2rad(lat_grid))
-    print(weighted_lat)
-
     # Compute the square of the differences
     speedy_diff_squared = speedy_diff ** 2
     hybrid_diff_squared = hybrid_diff ** 2
 
     # Scale the squared differences by the sine of the latitude
-    speedy_diff_scaled = np.sum(speedy_diff_squared * weighted_lat)/np.sum(weighted_lat)
-    hybrid_diff_scaled = np.sum(hybrid_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    # speedy_diff_scaled = np.sum(speedy_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    # hybrid_diff_scaled = np.sum(hybrid_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    speedy_diff_scaled = (speedy_diff_squared * weighted_lat)
+    hybrid_diff_scaled = (hybrid_diff_squared * weighted_lat)
 
     # Calculate the square root to obtain the weighted RMSE
-    # weighted_speedy_rmse = np.sqrt(np.mean(speedy_diff_scaled))
-    # weighted_hybrid_rmse = np.sqrt(np.mean(hybrid_diff_scaled))
-    weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
-    weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
+    weighted_speedy_rmse = np.sqrt(np.mean(speedy_diff_scaled))
+    weighted_hybrid_rmse = np.sqrt(np.mean(hybrid_diff_scaled))
+    # weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
+    # weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
     print("Weighted RMSE for speedy_diff:", weighted_speedy_rmse)
     print("Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse)
     print("Weighted area percent = ", (abs(weighted_speedy_rmse - weighted_hybrid_rmse)/ weighted_speedy_rmse)*100)
@@ -101,40 +101,26 @@ for i, field in enumerate(fields):
     print("SPEEDY RMSE =", rmse_speedy)
     print("HYBRID RMSE =", rmse_hybrid)
 
-    # w_rmse_speedy = np.sqrt((np.mean(speedy_diff*np.sin(np.deg2rad(lat_grid))))**2)
-    # w_rmse_hybrid = np.sqrt((np.mean(hybrid_diff*np.sin(np.deg2rad(lat_grid))))**2)
-    # w_speedy = np.mean((speedy_diff*weighted_lat)**2)
-    # w_rmse_speedy = np.sqrt(w_speedy)
-
-    # w_hybrid = np.mean((hybrid_diff*weighted_lat)**2)
-    # w_rmse_hybrid = np.sqrt(w_hybrid)
-
-
-    # print("SPEEDY WRMSE =", w_rmse_speedy)
-    # print("HYBRID WRMSE =", w_rmse_hybrid)
-    # print("weighted area RMSE = ", abs(w_rmse_speedy - w_rmse_hybrid)/ w_rmse_speedy)
-
-    #     w_sum_speedy = np.sum(np.sqrt(speedy_diff**2)*weighted_lat)/np.sum(weighted_lat)
-    #     w_sum_hybrid = np.sum(np.sqrt(hybrid_diff**2)*weighted_lat)/np.sum(weighted_lat)
-
-    # print("SPEEDY W_sumMSE =", w_sum_speedy)
-    # print("HYBRID W_sumRMSE =", w_sum_hybrid)
-    # print("weighted area RMSE = ", abs(w_sum_speedy - w_sum_hybrid)/ w_sum_speedy)
-
     min = -1.0*np.max(speedy_diff)
     max = np.max(speedy_diff)
     # Create the first subplot in the top left
-    ax1 = fig.add_subplot(gs[i, 0], projection=ccrs.PlateCarree(central_longitude=180))
+    ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy_diff, 
-             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.format_float_scientific(weighted_speedy_rmse, precision = 2)}', 
-             units[i], min, max, i)
+             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse, decimals=2)}', 
+             units[i], -10, 10, i)
    
 
     # Create the second subplot in the top right
-    ax2 = fig.add_subplot(gs[i, 1], projection=ccrs.PlateCarree(central_longitude=180))
+    ax2 = fig.add_subplot(gs[0, 3:], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax2, hybrid_diff, 
-             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.format_float_scientific(weighted_hybrid_rmse, precision = 2)}', 
-             units[i], min, max, i)
+             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse, decimals=2)}', 
+             units[i], -10, 10, i)
+    
+    # Create the third subplot in the bottom middle
+    ax3 = fig.add_subplot(gs[1, 1:5], projection=ccrs.PlateCarree(central_longitude=180))
+    plot_map(ax3, abs(speedy_diff) - abs(hybrid_diff), 
+             f'{field_names[i]} (SPEEDY - Hybrid)', 
+             units[i], -1.0*np.max(speedy_diff - hybrid_diff), np.max(speedy_diff - hybrid_diff), i)
 
 
 plt.subplots_adjust(wspace=0.3, hspace=0.1)
