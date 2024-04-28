@@ -41,6 +41,7 @@ def read_flux_files_2_nc(folder, n_files):
     cloudc = []
     tsr = []
     olr = []
+    i = 0
 
     # for date in filenames:              
     for filename in os.listdir(folder):
@@ -52,17 +53,18 @@ def read_flux_files_2_nc(folder, n_files):
             cloudc.append(fdata[:, :, 0])
             tsr.append(fdata[:, :, 4])
             olr.append(fdata[:, :, 5])
+            i += 1
 
     var_name = f'cloudc'
-    ds_cc = xr.DataArray(np.stack(cloudc, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    ds_cc = xr.DataArray(np.stack(cloudc, axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_cc[var_name] = ds_cc
 
     var_name = f'tsr'
-    ds_tsr = xr.DataArray(np.stack(tsr, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    ds_tsr = xr.DataArray(np.stack(tsr, axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_tsr[var_name] = ds_tsr
 
     var_name = f'olr'
-    ds_olr = xr.DataArray(np.stack(olr, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    ds_olr = xr.DataArray(np.stack(olr, axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_olr[var_name] = ds_olr
     
     return ds_cc, ds_tsr, ds_olr
@@ -79,7 +81,7 @@ def read_files_2_nc(folder, n_files):
     precip = []
     T = [[] for _ in range(8)]
     Q = [[] for _ in range(8)]
-
+    i = 0
     # for date in filenames:              
     for filename in os.listdir(folder):
         f = os.path.join(folder, filename)
@@ -94,24 +96,25 @@ def read_files_2_nc(folder, n_files):
                 T[z].append(fdata[:, :, z+16])
             for z in range(8):
                 Q[z].append(fdata[:, :, z+24])
+            i += 1
 
     # Create a DataArray for each level along 'z' and assign it to the Dataset
     for z in range(8):
         var_name = f'T_{z}'
-        da_t = xr.DataArray(np.stack(T[z], axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+        da_t = xr.DataArray(np.stack(T[z], axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
         ds_t[var_name] = da_t
 
     for z in range(8):
         var_name = f'Q_{z}'
-        da_q = xr.DataArray(np.stack(Q[z], axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+        da_q = xr.DataArray(np.stack(Q[z], axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
         ds_q[var_name] = da_q
 
     var_name = f'ps'
-    da_ps = xr.DataArray(np.stack(ps, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    da_ps = xr.DataArray(np.stack(ps, axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_ps[var_name] = da_ps
 
     var_name = f'precip'
-    da_precip = xr.DataArray(np.stack(precip, axis=0), coords={'timestamp': range(n_files), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
+    da_precip = xr.DataArray(np.stack(precip, axis=0), coords={'timestamp': range(i), 'lon': range(96), 'lat': range(48)}, dims=['timestamp', 'lon', 'lat'], name=var_name)
     ds_precip[var_name] = da_precip
     
     return ds_t, ds_q, ds_ps, ds_precip
