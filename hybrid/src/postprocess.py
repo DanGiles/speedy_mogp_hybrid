@@ -153,11 +153,11 @@ def main(data_root):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    # ds_cc, ds_tsr, ds_olr = read_flux_files_2_nc(file_folder)
+    ds_cc, ds_tsr, ds_olr = read_flux_files_2_nc(file_folder)
     # # Write the Dataset to a netCDF4 file
-    # ds_cc.to_netcdf(os.path.join(output_dir,f'{name}_cloudc.nc'), engine='netcdf4')
-    # ds_tsr.to_netcdf(os.path.join(output_dir,f'{name}_tsr.nc'), engine='netcdf4')
-    # ds_olr.to_netcdf(os.path.join(output_dir,f'{name}_olr.nc'), engine='netcdf4')
+    ds_cc.to_netcdf(os.path.join(output_dir,f'{name}_cloudc.nc'), engine='netcdf4')
+    ds_tsr.to_netcdf(os.path.join(output_dir,f'{name}_tsr.nc'), engine='netcdf4')
+    ds_olr.to_netcdf(os.path.join(output_dir,f'{name}_olr.nc'), engine='netcdf4')
 
     ds_t, ds_q, ds_ps, ds_precip = read_files_2_nc(file_folder)
     ds_precip.to_netcdf(os.path.join(output_dir,f'{name}_precip.nc'), engine='netcdf4')
