@@ -107,21 +107,21 @@ def mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev):
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
     # Rescale the Specific Humidity
-    variance[8:,:] = variance[8:,:]/1000
-    uncer[8:,:] = uncer[8:,:]/1000
+    # variance[8:,:] = variance[8:,:]/1000
+    # uncer[8:,:] = uncer[8:,:]/1000
 
     low_values_flags = variance < 1e-5  # Where values are low
     variance[low_values_flags] = 0.0
 
     draws = np.random.normal(0, 1, np.shape(T_mean))
     resampled_T = T_mean.flatten() + draws.flatten() * (variance[:8,:].T.flatten() + uncer[:8,:].T.flatten())
-    resampled_Q = Q_mean.flatten() + draws[:,:5].flatten() * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
+    resampled_Q = Q_mean.flatten() + draws.flatten() * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
 
-    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, 5))
+    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, nlev))
     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
 
     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
-    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, 5))
+    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, nlev))
 
     return variance, uncer, resampled_T, resampled_Q
 
@@ -164,9 +164,9 @@ def main():
     print("Data Prep")
     variance, uncer, resampled_T, resampled_Q = mogp_prediction(mogp_input, trained_gp, nlon, nlat, nlev)
     print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
-    print("Max Q Difference %f"%(np.amax(data[:,:,24:29] - resampled_Q[:,:,:])))
+    print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
     data[:,:,16:24] = resampled_T[:,:,:]
-    data[:,:,24:29] = resampled_Q[:,:,:]
+    data[:,:,24:32] = resampled_Q[:,:,:]
 
     np.save(os.path.join(oneshot_dir, f"{IDate}_variance.npy"), variance)
     np.save(os.path.join(oneshot_dir, f"{IDate}_uncert.npy"), uncer)
