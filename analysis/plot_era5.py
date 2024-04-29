@@ -36,9 +36,9 @@ def plot_map(ax, field_data, title, unit, min , max, i) -> None:
     ax.set_title(title)
 
 
-hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
-speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
-ERA5_path = "/home/dan/Documents/speedy_mogp_hybrid/ERA5"
+hybrid_path = ""
+speedy_path = ""
+ERA5_path = ""
 
 
 # Set up the coordinate system
