@@ -10,7 +10,7 @@ end=5
 for ((i=start; i<=end; i++))
 do
     # Create directory based on current integer value
-    folder="/home/dan/Documents/speedy_mogp_hybrid/results/run_$i"
+    folder=""
     export HYBRID_data_root=$folder
 
     # Call the wrapper
