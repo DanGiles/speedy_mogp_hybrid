@@ -5,40 +5,56 @@ import matplotlib as mpl
 import cartopy.crs as ccrs
 import xarray as xr
 import matplotlib.colors as colors
+import cmocean as cmo
+from matplotlib.colors import LinearSegmentedColormap
 
-
-def plot_map(ax, field_data, title, unit, min , max, i) -> None:
+def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     ax.coastlines()
-    if i == 0:
-        vmin = int(np.floor(min))
-        vmax = int(np.ceil(max))
-        diff = vmax - vmin
-        boundaries = np.arange(vmin, vmax + 1)
-    else:
-        vmin = min
-        vmax = max
-        boundaries = np.linspace(vmin, vmax, 100)
+    
+    vmin = int(np.floor(min))
+    vmax = int(np.ceil(max))
+    boundaries = np.arange(vmin, vmax + 1)
 
-    heatmap= ax.contourf(
-        speedy_lon_grid, 
-        speedy_lat_grid, 
-        field_data,
-        levels = boundaries,
-        extend = 'both',
-        cmap=mpl.cm.PuOr
-    )
+    if i == 2:
+        thresh = 1/3
+        nodes = [0, thresh, 2*thresh, 1.0]
+        colors = ["blue", "white", "white", "red"]
+        cmap = mpl.colors.LinearSegmentedColormap.from_list("", list(zip(nodes, colors)))
+        cmap.set_under("blue")
+        cmap.set_over('red')
+
+        heatmap= ax.contourf(
+            speedy_lon_grid, 
+            speedy_lat_grid, 
+            field_data,
+            # levels = boundaries,
+            extend = 'both',
+            cmap=mpl.cm.PuOr,
+            norm=mpl.colors.CenteredNorm()
+        )
+    else:
+        cmap = cmo.cm.balance_r
+
+        heatmap= ax.contourf(
+            speedy_lon_grid, 
+            speedy_lat_grid, 
+            field_data,
+            levels = boundaries,
+            extend = 'both',
+            cmap=cmap
+        )
     ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
-    cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=20)
+    cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect)
     cbar.ax.set_xlabel(f'{unit}')
     ax.set_xlabel(r'Longitude ($^{\circ}$)')
     ax.set_ylabel(r'Latitude ($^{\circ}$)')
     ax.set_title(title)
 
 
-hybrid_path = ""
-speedy_path = ""
-ERA5_path = ""
+hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
+speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
+ERA5_path = "/home/dan/Documents/speedy_mogp_hybrid/ERA5"
 
 
 # Set up the coordinate system
@@ -103,24 +119,26 @@ for i, field in enumerate(fields):
 
     min = -1.0*np.max(speedy_diff)
     max = np.max(speedy_diff)
+
+    print(np.min(abs(speedy_diff) - abs(hybrid_diff)), np.max(abs(speedy_diff) - abs(hybrid_diff)))
     # Create the first subplot in the top left
     ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy_diff, 
              f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse, decimals=2)}', 
-             units[i], -10, 10, i)
+             units[i], -10, 10, i, 25)
    
 
     # Create the second subplot in the top right
     ax2 = fig.add_subplot(gs[0, 3:], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax2, hybrid_diff, 
              f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse, decimals=2)}', 
-             units[i], -10, 10, i)
+             units[i], -10, 10, i, 25)
     
     # Create the third subplot in the bottom middle
     ax3 = fig.add_subplot(gs[1, 1:5], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax3, abs(speedy_diff) - abs(hybrid_diff), 
-             f'{field_names[i]} (SPEEDY - Hybrid)', 
-             units[i], -1.0*np.max(speedy_diff - hybrid_diff), np.max(speedy_diff - hybrid_diff), i)
+             '|SPEEDY - ERA5| - |Hybrid - ERA5|', 
+             units[i], np.min(speedy_diff - hybrid_diff), np.max(speedy_diff - hybrid_diff), 2, 40)
 
 
 plt.subplots_adjust(wspace=0.3, hspace=0.1)
