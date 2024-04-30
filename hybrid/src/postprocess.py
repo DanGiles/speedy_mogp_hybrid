@@ -92,7 +92,7 @@ def read_files_2_nc(folder):
     Q = [[] for _ in range(8)]
     i = 0
     # for date in filenames:              
-    for filename in os.listdir(folder):
+    for filename in sorted(os.listdir(folder)):
         f = os.path.join(folder, filename)
         # checking if it is a file and if correct date
         if os.path.isfile(f) and "grd" in f and "fluxes.grd" not in f:
