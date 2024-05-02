@@ -83,8 +83,10 @@ def plot_map_mask(ax, field_data, t_stats, vmin, vmax, title, unit, cmap, aspect
     # ax.yaxis.set_major_formatter(cartopy.mpl.ticker.LatitudeFormatter()) # available from cartopy v0.23
     ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
+    ax.set_xlabel(r'Longitude ($^{\circ}$)')
+    ax.set_ylabel(r'Latitude ($^{\circ}$)')
     ax.set_title(title)
-    cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect)
+    cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect, pad = 0.2)
     cbar.ax.set_xlabel(f'{unit}')
     return heatmap #mpl.cm.ScalarMappable(norm, cmap)
 
@@ -137,7 +139,7 @@ for i, field in enumerate(vars):
         axes.flat[i].hlines(y_high, x_low, x_high, color='red')
         axes.flat[i].hlines(y_low, x_low, x_high, color='red')
     # fig.colorbar(scalarmap, ax=axes.flat[i])
-
+plt.subplots_adjust(wspace=0.3, hspace=0.2)
 plt.savefig(os.path.join(output_path, f'hybrid_speedy_diffs_masked_{neutral_or_warm}.png'), dpi=300, bbox_inches='tight')
 # plt.show()
 plt.close()
