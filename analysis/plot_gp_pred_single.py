@@ -13,7 +13,7 @@ def plot_map(ax, field_data, title, unit, heatmap=None, **kwargs):
     ax.coastlines()
     heatmap = ax.contourf(lon_grid, lat_grid, field_data, **kwargs)
     # heatmap.set_clim(**kwargs)
-    ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
+    ax.set_xticks(ticks=[0, 90, 180, 270, 360])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=25)
     cbar.ax.set_xlabel(f'{unit}')

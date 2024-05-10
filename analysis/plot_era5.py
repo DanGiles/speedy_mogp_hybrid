@@ -43,7 +43,7 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
             extend = 'both',
             cmap=cmap
         )
-    ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
+    ax.set_xticks(ticks=[0, 90, 180, 270, 360])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect)
     cbar.ax.set_xlabel(f'{unit}')

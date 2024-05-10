@@ -81,7 +81,7 @@ def plot_map_mask(ax, field_data, t_stats, vmin, vmax, title, unit, cmap, aspect
     )
     # ax.xaxis.set_major_formatter(cartopy.mpl.ticker.LongitudeFormatter()) # available from cartopy v0.23
     # ax.yaxis.set_major_formatter(cartopy.mpl.ticker.LatitudeFormatter()) # available from cartopy v0.23
-    ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
+    ax.set_xticks(ticks=[0, 90, 180, 270, 360])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     ax.set_xlabel(r'Longitude ($^{\circ}$)')
     ax.set_ylabel(r'Latitude ($^{\circ}$)')
