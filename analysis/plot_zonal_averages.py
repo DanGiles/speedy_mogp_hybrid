@@ -7,9 +7,9 @@ import matplotlib as mpl
 import cartopy.feature as cfeature
 from typing import List
 
-from script_variables import *
 
-output_dir = os.path.join(analysis_root, 'annual')
+hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
+speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
 
 runs = ["HYBRID", "SPEEDY"]
 nlon = 96
@@ -26,8 +26,8 @@ sigma_levels = [0.95, 0.835, 0.685, 0.51, 0.34, 0.20, 0.095, 0.025]
 pressure_levels = [925, 850, 700, 500, 300, 200, 100, 30]
 # sigma_levels = np.flip(sigma_levels)
 
-speedy_data = xr.load_dataset(os.path.join(output_dir, f'SPEEDY_T.nc'))
-hybrid_data = xr.load_dataset(os.path.join(output_dir, f'HYBRID_T.nc'))
+speedy_data = xr.load_dataset(os.path.join(speedy_path, f'SPEEDY_T.nc'))
+hybrid_data = xr.load_dataset(os.path.join(hybrid_path, f'HYBRID_T.nc'))
 
 speedy_strip = np.zeros((nlev, nlat))
 hybrid_strip = np.zeros((nlev, nlat))
@@ -36,48 +36,28 @@ for lev in range(nlev):
     speedy = speedy_data[f'T_{lev}']
     speedy = speedy.mean('timestamp')
     speedy = speedy[60:75, :]
-    speedy = speedy.mean('lon')
+    speedy = speedy.mean('longitude')
     speedy_strip[lev, :] = speedy
 
     hybrid = hybrid_data[f'T_{lev}']
     hybrid = hybrid.mean('timestamp')
     hybrid = hybrid[60:75, :]
-    hybrid = hybrid.mean('lon')
+    hybrid = hybrid.mean('longitude')
     hybrid_strip[lev, :] = hybrid
 
 
-output_path = os.path.join(output_dir, 'zonal')
-fig, axes = plt.subplots(nrows=3, ncols=1)
-heatmap = axes[0].contourf(
+# output_path = os.path.join(hybrid_path, 'zonal')
+fig, axes = plt.subplots(nrows=1, ncols=1)
+heatmap = axes.contourf(
         lats,
         pressure_levels, 
-        speedy_strip
+        (hybrid_strip - speedy_strip)
     )
-cbar = plt.colorbar(heatmap, ax=axes[0])
-axes[0].set_title('Speedy [K]')
-axes[0].set_ylabel('Pressure levels [hPa]')
-axes[0].set_ylim(bottom=925., top=30.)
-
-heatmap = axes[1].contourf(
-        lats,
-        pressure_levels, 
-        hybrid_strip
-    )
-cbar = plt.colorbar(heatmap, ax=axes[1])
-axes[1].set_title('Hybrid [K]')
-axes[1].set_ylabel('Pressure levels [hPa]')
-axes[1].set_ylim(bottom=925., top=30.)
-
-heatmap = axes[2].contourf(
-        lats,
-        pressure_levels, 
-        (hybrid_strip - speedy_strip) 
-    )
-cbar = plt.colorbar(heatmap, ax=axes[2])
-axes[2].set_ylabel('Pressure levels [hPa]')
-axes[2].set_xlabel('Latitude')
-axes[2].set_title('Hybrid - Speedy [K]')
-axes[2].set_ylim(bottom=925., top=30.)
-plt.savefig(os.path.join(output_path, f'Zonal_temp_diff_pacific.png'))
+cbar = plt.colorbar(heatmap, ax=axes)
+axes.set_ylabel('Pressure levels [hPa]')
+axes.set_xlabel('Latitude')
+axes.set_title('Hybrid - Speedy [K]')
+axes.set_ylim(bottom=925., top=30.)
+plt.savefig(os.path.join(hybrid_path, f'Zonal_temp_diff_pacific.png'))
 plt.show()
     

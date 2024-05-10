@@ -6,17 +6,19 @@ import subprocess
 from datetime import datetime, date, timedelta
 import shutil # for removing data from previous simulations
 import pickle
+import sys
 
 from mogp import *
 from script_variables import *
 
-def check_total_water(Q, Qs, rho):
+def check_total_water(Q, Qs):
     num = 0
+    rho = [1.1379, 1.0626, 0.908 , 0.6914, 0.4572]
     for i in range(len(Q[:,0])):
         water_content = np.sum(Q[i,:]*rho)
         sample = np.sum(Qs[i,:]*rho)
-        diff = abs(sample - water_content)
-        if diff > 1e-3:
+        diff = abs(sample - water_content)/water_content
+        if diff > 0.5:
             Qs[i,:] = Q[i,:]
             num +=1
     print("Number of physically inconsistent profiles (total water content) %i"%num)
@@ -29,15 +31,16 @@ def check_static_energy(Q, Qs, T, Ts):
     Cp = 1.005
     Lv = 2260
     for i in range(len(Q[:,0])):
-        static_energy = np.sum(Q[i,:]*Lv + Cp*T[i,:])
-        sample_static_energy = np.sum(Qs[i,:]*Lv + Cp*Ts[i,:])
-        diff = abs(sample_static_energy - static_energy)
-        if diff > 1.0:
+        static_energy = np.sum(Q[i,:]*Lv + Cp*T[i,:5])
+        sample_static_energy = np.sum(Qs[i,:]*Lv + Cp*Ts[i,:5])
+        diff = abs(sample_static_energy - static_energy)/static_energy
+        if diff > 0.05:
             Ts[i,:] = T[i,:]
+            Qs[i,:] = Q[i,:]
             num +=1
     print("Number of physically inconsistent profiles (moist static energy) %i"%num)
 
-    return Ts
+    return Ts, Qs
 
 
 def make_dir(path: str) -> None:
@@ -111,71 +114,84 @@ def read_oro_var() -> np.ndarray:
 
 def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     T_mean = data[:,:,16:24]
-    Q_mean = data[:,:,24:32]
+    Q_mean = data[:,:,24:29]
     low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
     Q_mean[low_values_flags] = 1e-6
+    # Version for gp_with_oro_var
+    train = np.empty(((nlon*nlat),17), dtype = np.float64)
+    train[:, 0] = data[:,:,32].flatten()
+    train[:, 1] = oro[...,0].flatten()
+    train[:, 2] = oro[...,1].flatten() 
+    train[:, 3] = ls.flatten()
+    train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
+    train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 5))
 
-    if GP_name == "gp_without_oro_var":
-        # Version for gp_without_oro_var
-        train = np.empty(((nlon*nlat),19), dtype = np.float64)
-        train[:, 0] = data[:,:,32].flatten()
-        train[:, 1] = oro.flatten()
-        train[:, 2] = ls.flatten()
-        train[:, 3:11] = np.reshape(T_mean, ((nlon*nlat), 8))
-        train[:, 11:] = np.reshape(Q_mean, ((nlon*nlat), 8))
-    elif GP_name == "gp_with_oro_var":
-        # Version for gp_with_oro_var
-        train = np.empty(((nlon*nlat),20), dtype = np.float64)
-        train[:, 0] = data[:,:,32].flatten()
-        train[:, 1] = oro[...,0].flatten()
-        train[:, 2] = oro[...,1].flatten() 
-        train[:, 3] = ls.flatten()
-        train[:, 4:12] = np.reshape(T_mean, ((nlon*nlat), 8))
-        train[:, 12:] = np.reshape(Q_mean, ((nlon*nlat), 8))
-    else:
-        raise ValueError(f"GP_name not recognised, {GP_name} provided.")
     return train
 
+# def mogp_prediction_conserving(mogp_inputs, trained_gp, nlon, nlat, nlev):
+#     variance, uncer, d = trained_gp.predict(mogp_inputs)
+#     T_mean = mogp_inputs[:, 4:12]
+#     Q_mean = mogp_inputs[:, 12:]
+#     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
+#     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
+    
+#     # Rescale the Specific Humidity
+#     variance[8:,:] = variance[8:,:]/1000
+#     uncer[8:,:] = uncer[8:,:]/1000
+
+#     low_values_flags = variance < 1e-5  # Where values are low
+#     variance[low_values_flags] = 0.0
+
+#     draws = np.random.normal(0, 1, np.shape(T_mean))
+#     resampled_T = T_mean.flatten() + draws.flatten() * (variance[:8,:].T.flatten() + uncer[:8,:].T.flatten())
+#     resampled_Q = Q_mean.flatten() + draws[:,:5].flatten() * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
+
+#     resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, 5))
+#     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
+
+#     resampled_Q = check_total_water(Q_mean, resampled_Q)
+#     resampled_T, resampled_Q = check_static_energy(Q_mean, resampled_Q, T_mean, resampled_T)
+
+#     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
+#     resampled_Q = np.reshape(resampled_Q, (nlon, nlat, 5))
+
+#     return resampled_T, resampled_Q
 
 def mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev):
     variance, uncer, d = trained_gp.predict(mogp_inputs)
     print("Prediction")
-    if GP_name == "gp_without_oro_var":
-        T_mean = mogp_inputs[:, 3:11]
-        Q_mean = mogp_inputs[:, 11:]
-    elif GP_name == "gp_with_oro_var":
-        T_mean = mogp_inputs[:, 4:12]
-        Q_mean = mogp_inputs[:, 12:]
+
+    T_mean = mogp_inputs[:, 4:12]
+    Q_mean = mogp_inputs[:, 12:]
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
+    # # Rescale the Specific Humidity
+    variance[8:,:] = variance[8:,:]/1000
+    uncer[8:,:] = uncer[8:,:]/1000
+
     low_values_flags = variance < 1e-6  # Where values are low
     variance[low_values_flags] = 0.0
 
-    draws = np.random.normal(0, 1, np.shape(T_mean.flatten()))
-    resampled_T = T_mean.flatten() + draws * (variance[:8,:].T.flatten() + uncer[:8,:].T.flatten())
-    resampled_Q = Q_mean.flatten() + draws * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
+    draws = np.random.normal(0, 1, np.shape(T_mean))
+    resampled_T = T_mean.flatten() + draws.flatten() * (variance[:8,:].T.flatten() + uncer[:8,:].T.flatten())
+    resampled_Q = Q_mean.flatten() + draws[:,:5].flatten() * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
 
-    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, nlev))
+    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, 5))
     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
 
+    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, 5))
     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
-    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, nlev))
+    # print(f"Max std T = {np.amax(variance[:8,:])} and Q = {np.amax(variance[8:,:])}")
 
     return resampled_T, resampled_Q
 
 
 
-def main():
-    if TRAIN_GP:
-        # Train the GP Model
-        plot_folder = os.path.join("", "")
-        n_train = 500
-        print("Starting Training")
-        trained_gp, test_UM = train_mogp(plot_folder, n_train)
-    else:
-        # Read in pre-trained GP model
-        trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
+def main(HYBRID_data_root):
+    # Read in pre-trained GP model
+    print(HYBRID_data_root)
+    trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
 
@@ -200,10 +216,8 @@ def main():
     oro = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 0)
     lsm = read_const_grd(os.path.join(SPEEDY_root, "model", "data/bc/t30/clim", "sfc.grd"), nlon, nlat, 1)
     oro = np.flip(oro, 1)
+    oro = np.stack((oro, read_oro_var()), axis=2)
     lsm = np.flip(lsm, 1)
-
-    if GP_name == "gp_with_oro_var":
-        oro = np.stack((oro, read_oro_var()), axis=2)
 
     # Main time loop
     for t in range(0,number_time_steps):
@@ -216,9 +230,9 @@ def main():
         print("Data Prep")
         resampled_T, resampled_Q = mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev)
         print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
-        print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
+        print("Max Q Difference %f"%(np.amax(data[:,:,24:29] - resampled_Q[:,:,:])))
         data[:,:,16:24] = resampled_T[:,:,:]
-        data[:,:,24:32] = resampled_Q[:,:,:]
+        data[:,:,24:29] = resampled_Q[:,:,:]
 
         # # Write updated data to fortran speedy file
         file = os.path.join(data_folder, (IDate+".grd"))
@@ -238,6 +252,6 @@ def main():
     return
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])
 
 

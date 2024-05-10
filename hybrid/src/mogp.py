@@ -142,28 +142,19 @@ def map_to_speedy_pressure_levels(X: np.ndarray, Y: np.ndarray):
 
 
 def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
-    if GP_name == "gp_without_oro_var":
-        train = np.empty((19, X.shape[2]), dtype = np.float64)
 
-        train[0, :] = X_ps  #surface level AVG air pressure
-        train[1, :] = oro   #orography
-        train[2, :] = ls    #land-sea ratio
-        train[3:11, :] = X[1, :, :] #AVG air temp at desired levels
-        train[11:, :] = X[2, :, :]  #AVG humudity at desired levels
-    elif GP_name == "gp_with_oro_var":
-        train = np.empty((20, X.shape[2]), dtype = np.float64)
+    train = np.empty((20, X.shape[2]), dtype = np.float64)
 
-        train[0, :] = X_ps  #surface level AVG air pressure
-        train[1:3, :] = oro   #orography
-        train[3, :] = ls    #land-sea ratio
-        train[4:12, :] = X[1, :, :] #AVG air temp at desired levels
-        train[12:, :] = X[2, :, :]  #AVG humudity at desired levels
-    else:
-        raise Exception("GP_name not recognised.")
+    train[0, :] = X_ps  #surface level AVG air pressure
+    train[1:3, :] = oro   #orography
+    train[3, :] = ls    #land-sea ratio
+    train[4:12, :] = X[1, :, :] #AVG air temp at desired levels
+
+    train[12:, :] = X[2, :, :] #AVG humudity at desired levels
     
     target = np.empty((16, X.shape[2]), dtype = np.float64)
     target[:8, :] = y[0, :] #STD air temp at desired levels
-    target[8:, :] = y[1, :] #STD humudity at desired levels
+    target[8:, :] = y[1, :]*1000 #STD humudity at desired levels
 
     return train, target
 
@@ -196,7 +187,7 @@ def train_mogp():
     # #oro_test.shape:    (n_test, ) or (2, n_test)
     # #ls_train.shape:    (n_train, )
     # #ls_test.shape:     (n_test, )
-    X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=1)
+    X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=2)
     X_test, Y_test, oro_test, ls_test, test_indices = sampler(X, Y, oro, land_sea, n_size=1)
 
     # #extract air temp (and humidity) at desired levels at all locations
