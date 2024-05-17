@@ -11,9 +11,18 @@ from datetime import datetime
 
 def plot_map(ax, field_data, title, unit, heatmap=None, **kwargs):
     ax.coastlines()
-    heatmap = ax.contourf(lon_grid, lat_grid, field_data, **kwargs)
+    heatmap = ax.contourf(lon_grid, lat_grid, field_data, transform=ccrs.PlateCarree(), **kwargs)
     # heatmap.set_clim(**kwargs)
-    ax.set_xticks(ticks=[0, 90, 180, 270, 360])
+    desired_ticks = [0, 90, 180, 270]
+
+    # Transform the tick locations to the projection coordinates
+    projection = ccrs.PlateCarree(central_longitude=180)
+    projected_ticks = [projection.transform_point(x, 0, ccrs.Geodetic()) for x in desired_ticks]
+
+    # Set the x-ticks using the projected coordinates
+    ax.set_xticks([pt[0] for pt in projected_ticks])
+    ax.set_xticklabels(desired_ticks)
+
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=25)
     cbar.ax.set_xlabel(f'{unit}')
@@ -22,7 +31,7 @@ def plot_map(ax, field_data, title, unit, heatmap=None, **kwargs):
     ax.set_title(title)
     return heatmap
 
-hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/"
+hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs"
 oneshot_dir = os.path.join(hybrid_path, "oneshot")
 # Set up the grid
 nlon = 96
@@ -30,10 +39,10 @@ nlat = 48
 nlev = 8
 # Set the dates
 # IDate = "1987060100"
-dates = ["1987010100", "1987060100"]
+dates = ["1987010100", "1987060112"]
 SPEEDY_DATE_FORMAT = "%Y%m%d%H"
 # Set up the coordinate system
-lon = np.linspace(-180, 180, nlon, endpoint=True) 
+lon = np.linspace(0, 360, nlon, endpoint=False) 
 # lat = np.linspace(-90, 90, nlat) # this does NOT match SPEEDY
 lat_vals = "-87.159 -83.479 -79.777 -76.070 -72.362 -68.652 -64.942 -61.232 -57.521 -53.810 -50.099 -46.389 -42.678 -38.967 -35.256 -31.545 -27.833 -24.122 -20.411 -16.700 -12.989  -9.278  -5.567  -1.856   1.856   5.567   9.278  12.989  16.700  20.411  24.122  27.833  31.545  35.256  38.967  42.678  46.389  50.099  53.810  57.521  61.232  64.942  68.652  72.362  76.070  79.777  83.479  87.159"
 lat = np.array([float(val) for val in lat_vals.split()]) # to match SPEEDY
@@ -65,7 +74,7 @@ for i, date in enumerate(dates):
         heatmap2 = plot_map(axes[3], Q_var[..., 0].T, f"{datetime.strptime(date, SPEEDY_DATE_FORMAT)}", r"$\sigma$(Specific Humidity) [kg/kg]")
 
     # fig.suptitle(f'MOGP Predictions - {pressure_levels[0]}hPa \n {date}')
-
+plt.show()
 plt.savefig(
     os.path.join(oneshot_dir, f'gp_pred.png'),
     dpi=300,
