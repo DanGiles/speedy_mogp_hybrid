@@ -22,7 +22,7 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
         cmap = mpl.colors.LinearSegmentedColormap.from_list("", list(zip(nodes, colors)))
         cmap.set_under("blue")
         cmap.set_over('red')
-
+        print(speedy_lon_grid)
         heatmap= ax.contourf(
             speedy_lon_grid, 
             speedy_lat_grid, 
@@ -43,7 +43,7 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
             extend = 'both',
             cmap=cmap
         )
-    ax.set_xticks(ticks=[0, 90, 180, 270, 360])
+    ax.set_xticks(ticks=[-180, -90, 0, 90, 180])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect)
     cbar.ax.set_xlabel(f'{unit}')
@@ -52,13 +52,13 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     ax.set_title(title)
 
 
-hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
-speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
-ERA5_path = "/home/dan/Documents/speedy_mogp_hybrid/ERA5"
+hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/run_1/annual"
+speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
+ERA5_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/era5"
 
 
 # Set up the coordinate system
-lon = np.linspace(-180, 180, 96, endpoint=True)
+lon = np.linspace(0, 360, 96, endpoint=True)
 lat_vals = "-87.159 -83.479 -79.777 -76.070 -72.362 -68.652 -64.942 -61.232 -57.521 -53.810 -50.099 -46.389 -42.678 -38.967 -35.256 -31.545 -27.833 -24.122 -20.411 -16.700 -12.989  -9.278  -5.567  -1.856   1.856   5.567   9.278  12.989  16.700  20.411  24.122  27.833  31.545  35.256  38.967  42.678  46.389  50.099  53.810  57.521  61.232  64.942  68.652  72.362  76.070  79.777  83.479  87.159"
 lat = np.array([float(val) for val in lat_vals.split()])
 speedy_lon_grid, speedy_lat_grid = np.meshgrid(lon, lat)
@@ -77,18 +77,23 @@ for i, field in enumerate(fields):
     speedy = xr.load_dataset(os.path.join(speedy_path, f'{runs[1]}_{field}.nc'))[field]
     hybrid = hybrid.mean('timestamp')
     speedy = speedy.mean('timestamp')
+    hybrid = hybrid.assign_coords(longitude=lon)
+    speedy = speedy.assign_coords(longitude=lon)
   
     file_name = f'{era_field[i]}_10years'
     ds = xr.open_dataset(os.path.join(ERA5_path, f"{file_name}.nc"))[era_field[i]]
     era5 = ds.mean('time')
+    era5 = era5.assign_coords(longitude=lon)
+    era5 = era5.drop_vars('step')
+    era5 = era5.drop_vars('surface')
+    era5 = era5.drop_vars('number')
 
     # print(np.max(speedy), np.max(era5))
     speedy = speedy.T
     hybrid = hybrid.T
 
-    speedy_diff = speedy.values - era5.values
-    hybrid_diff = hybrid.values - era5.values
-
+    speedy_diff = speedy - era5
+    hybrid_diff = hybrid - era5
     diff = abs(hybrid_diff) - abs(speedy_diff)
     lon_grid, lat_grid = np.meshgrid(era5.longitude, era5.latitude+90)
 
@@ -122,25 +127,25 @@ for i, field in enumerate(fields):
 
     print(np.min(abs(speedy_diff) - abs(hybrid_diff)), np.max(abs(speedy_diff) - abs(hybrid_diff)))
     # Create the first subplot in the top left
-    ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
+    ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=0))
     plot_map(ax1, speedy_diff, 
-             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse, decimals=2)}', 
+             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse.values, decimals=2)}', 
              units[i], -10, 10, i, 25)
    
 
     # Create the second subplot in the top right
-    ax2 = fig.add_subplot(gs[0, 3:], projection=ccrs.PlateCarree(central_longitude=180))
+    ax2 = fig.add_subplot(gs[0, 3:], projection=ccrs.PlateCarree(central_longitude=0))
     plot_map(ax2, hybrid_diff, 
-             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse, decimals=2)}', 
+             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse.values, decimals=2)}', 
              units[i], -10, 10, i, 25)
     
     # Create the third subplot in the bottom middle
-    ax3 = fig.add_subplot(gs[1, 1:5], projection=ccrs.PlateCarree(central_longitude=180))
+    ax3 = fig.add_subplot(gs[1, 1:5], projection=ccrs.PlateCarree(central_longitude=0))
     plot_map(ax3, abs(speedy_diff) - abs(hybrid_diff), 
              '|SPEEDY - ERA5| - |Hybrid - ERA5|', 
              units[i], np.min(speedy_diff - hybrid_diff), np.max(speedy_diff - hybrid_diff), 2, 40)
 
 
 plt.subplots_adjust(wspace=0.3, hspace=0.1)
-plt.savefig(os.path.join(hybrid_path, "ERA5_diff.png"), dpi = 300, bbox_inches='tight')
+plt.savefig(os.path.join(hybrid_path, "ERA5_diff_coords.png"), dpi = 300, bbox_inches='tight')
 plt.show()
