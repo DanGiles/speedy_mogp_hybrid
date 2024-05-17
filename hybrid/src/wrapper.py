@@ -186,14 +186,34 @@ def mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev):
 
     return resampled_T, resampled_Q
 
+def perturbations(mogp_inputs, nlon, nlat, nlev):
+    print("Prediction")
+    T_mean = mogp_inputs[:, 4:12]
+    Q_mean = mogp_inputs[:, 12:]
+    resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
+    resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
+
+
+    draws = np.random.normal(0, 1, np.shape(T_mean))
+    resampled_T = T_mean.flatten() + draws.flatten() * (0.01*T_mean.flatten())
+    resampled_Q = Q_mean.flatten() + draws[:,:5].flatten() * (0.01*Q_mean.flatten())
+
+    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, 5))
+    resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
+
+    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, 5))
+    resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
+
+    return resampled_T, resampled_Q
+
 
 
 def main(HYBRID_data_root):
     # Read in pre-trained GP model
     print(HYBRID_data_root)
-    trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
-    print(trained_gp)
-    print("Training Done!")
+    # trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
+    # print(trained_gp)
+    # print("Training Done!")
 
     # Defining constants and initial values
     SPEEDY_DATE_FORMAT = "%Y%m%d%H"
@@ -228,7 +248,7 @@ def main(HYBRID_data_root):
         # Loop through all columns
         mogp_inputs = data_prep(data, oro, lsm, nlon, nlat)
         print("Data Prep")
-        resampled_T, resampled_Q = mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev)
+        resampled_T, resampled_Q = perturbations(mogp_inputs, nlon, nlat, nlev)
         print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
         print("Max Q Difference %f"%(np.amax(data[:,:,24:29] - resampled_Q[:,:,:])))
         data[:,:,16:24] = resampled_T[:,:,:]
