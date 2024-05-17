@@ -33,7 +33,6 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
         cmap = mpl.colors.LinearSegmentedColormap.from_list("", list(zip(nodes, colors)))
         cmap.set_under("blue")
         cmap.set_over('red')
-        print(speedy_lon_grid)
         heatmap= ax.contourf(
             speedy_lon_grid, 
             speedy_lat_grid, 
@@ -126,19 +125,19 @@ for i, field in enumerate(fields):
     weighted_hybrid_rmse = np.sqrt(np.mean(hybrid_diff_scaled))
     # weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
     # weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
-    print("Weighted RMSE for speedy_diff:", weighted_speedy_rmse)
-    print("Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse)
-    print("Weighted area percent = ", (abs(weighted_speedy_rmse - weighted_hybrid_rmse)/ weighted_speedy_rmse)*100)
+    print("Weighted RMSE for speedy_diff:", weighted_speedy_rmse.values)
+    print("Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse.values)
+    print("Weighted area percent = ", (abs(weighted_speedy_rmse.values - weighted_hybrid_rmse.values)/ weighted_speedy_rmse.values)*100)
 
     rmse_speedy = np.sqrt((np.mean(speedy_diff**2)))
     rmse_hybrid = np.sqrt((np.mean(hybrid_diff**2)))
-    print("SPEEDY RMSE =", rmse_speedy)
-    print("HYBRID RMSE =", rmse_hybrid)
+    print("SPEEDY RMSE =", rmse_speedy.values)
+    print("HYBRID RMSE =", rmse_hybrid.values)
 
     min = -1.0*np.max(speedy_diff)
     max = np.max(speedy_diff)
 
-    print(np.min(abs(speedy_diff) - abs(hybrid_diff)), np.max(abs(speedy_diff) - abs(hybrid_diff)))
+    print(np.min(abs(speedy_diff.values) - abs(hybrid_diff.values)), np.max(abs(speedy_diff.values) - abs(hybrid_diff.values)))
     # Create the first subplot in the top left
     ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy_diff, 
@@ -160,5 +159,5 @@ for i, field in enumerate(fields):
 
 
 plt.subplots_adjust(wspace=0.3, hspace=0.1)
-plt.savefig(os.path.join(hybrid_path, "ERA5_diff_coords.png"), dpi = 300, bbox_inches='tight')
+plt.savefig(os.path.join(hybrid_path, "ERA5_diff.png"), dpi = 300, bbox_inches='tight')
 plt.show()
