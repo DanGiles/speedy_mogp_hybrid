@@ -74,7 +74,7 @@ for i, date in enumerate(dates):
         heatmap2 = plot_map(axes[3], Q_var[..., 0].T, f"{datetime.strptime(date, SPEEDY_DATE_FORMAT)}", r"$\sigma$(Specific Humidity) [kg/kg]")
 
     # fig.suptitle(f'MOGP Predictions - {pressure_levels[0]}hPa \n {date}')
-plt.show()
+
 plt.savefig(
     os.path.join(oneshot_dir, f'gp_pred.png'),
     dpi=300,
