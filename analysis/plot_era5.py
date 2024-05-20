@@ -64,7 +64,7 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     ax.set_title(title)
 
 
-hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/run_1/annual"
+hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/stochastic_perturbs_05/run_3"
 speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
 ERA5_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/era5"
 
@@ -107,6 +107,7 @@ for i, field in enumerate(fields):
     speedy_diff = speedy - era5
     hybrid_diff = hybrid - era5
     diff = abs(hybrid_diff) - abs(speedy_diff)
+    # Global
     lon_grid, lat_grid = np.meshgrid(era5.longitude, era5.latitude+90)
 
     weighted_lat = np.sin(np.deg2rad(lat_grid))
@@ -125,14 +126,36 @@ for i, field in enumerate(fields):
     weighted_hybrid_rmse = np.sqrt(np.mean(hybrid_diff_scaled))
     # weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
     # weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
-    print("Weighted RMSE for speedy_diff:", weighted_speedy_rmse.values)
-    print("Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse.values)
-    print("Weighted area percent = ", (abs(weighted_speedy_rmse.values - weighted_hybrid_rmse.values)/ weighted_speedy_rmse.values)*100)
+    print("Global Weighted RMSE for speedy_diff:", weighted_speedy_rmse.values)
+    print("Global Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse.values)
+    print("Global Weighted area percent = ", (abs(weighted_speedy_rmse.values - weighted_hybrid_rmse.values)/ weighted_speedy_rmse.values)*100)
 
-    rmse_speedy = np.sqrt((np.mean(speedy_diff**2)))
-    rmse_hybrid = np.sqrt((np.mean(hybrid_diff**2)))
-    print("SPEEDY RMSE =", rmse_speedy.values)
-    print("HYBRID RMSE =", rmse_hybrid.values)
+    # Tropics
+    lat_min = np.argmin(abs(lat_grid[:,0] - 66.564))
+    lat_max = np.argmin(abs(lat_grid[:,0] - 113.436))
+    tropic_weighted_lat = np.sin(np.deg2rad(lat_grid[lat_min+1 : lat_max, :]))
+    # Compute the square of the differences
+    LatIndexer = 'latitude'
+    tropic_speedy_diff = speedy_diff.sel(**{LatIndexer: slice(-23.436, 23.436)})
+    tropic_hybrid_diff = hybrid_diff.sel(**{LatIndexer: slice(-23.436, 23.436)})
+
+    tropic_speedy_diff_squared = tropic_speedy_diff ** 2
+    tropic_hybrid_diff_squared = tropic_hybrid_diff ** 2
+
+    # Scale the squared differences by the sine of the latitude
+    # speedy_diff_scaled = np.sum(speedy_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    # hybrid_diff_scaled = np.sum(hybrid_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    tropic_speedy_diff_scaled = (tropic_speedy_diff_squared * tropic_weighted_lat)
+    tropic_hybrid_diff_scaled = (tropic_hybrid_diff_squared * tropic_weighted_lat)
+
+    # Calculate the square root to obtain the weighted RMSE
+    tropic_weighted_speedy_rmse = np.sqrt(np.mean(tropic_speedy_diff_scaled))
+    tropic_weighted_hybrid_rmse = np.sqrt(np.mean(tropic_hybrid_diff_scaled))
+    # weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
+    # weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
+    print("Tropics Weighted RMSE for speedy_diff:", tropic_weighted_speedy_rmse.values)
+    print("Tropics Weighted RMSE for hybrid_diff:", tropic_weighted_hybrid_rmse.values)
+    print("Tropics Weighted area percent = ", (abs(tropic_weighted_speedy_rmse.values - tropic_weighted_hybrid_rmse.values)/ tropic_weighted_speedy_rmse.values)*100)
 
     min = -1.0*np.max(speedy_diff)
     max = np.max(speedy_diff)
