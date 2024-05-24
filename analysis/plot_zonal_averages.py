@@ -8,8 +8,8 @@ import cartopy.feature as cfeature
 from typing import List
 
 
-hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
-speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
+hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/desktop_run/annual"
+speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
 
 runs = ["HYBRID", "SPEEDY"]
 nlon = 96
@@ -35,29 +35,45 @@ hybrid_strip = np.zeros((nlev, nlat))
 for lev in range(nlev):
     speedy = speedy_data[f'T_{lev}']
     speedy = speedy.mean('timestamp')
-    speedy = speedy[60:75, :]
+    speedy = speedy[51:75, :]
     speedy = speedy.mean('longitude')
     speedy_strip[lev, :] = speedy
 
     hybrid = hybrid_data[f'T_{lev}']
     hybrid = hybrid.mean('timestamp')
-    hybrid = hybrid[60:75, :]
+    hybrid = hybrid[51:75, :]
     hybrid = hybrid.mean('longitude')
     hybrid_strip[lev, :] = hybrid
 
-
+print(lons[51], lons[75])
 # output_path = os.path.join(hybrid_path, 'zonal')
-fig, axes = plt.subplots(nrows=1, ncols=1)
-heatmap = axes.contourf(
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(17,13))
+ax = axes.flatten()
+heatmap = ax[0].contourf(
+        lats,
+        pressure_levels, 
+        (speedy_strip)
+    )
+cbar = plt.colorbar(heatmap, ax=ax[0])
+cbar.ax.tick_params(labelsize=25)
+ax[0].set_ylabel('Pressure levels [hPa]', fontsize=30)
+# ax[0].set_xlabel('Latitude', fontsize=30)
+ax[0].set_title('Speedy [K]', fontsize=30)
+ax[0].tick_params(axis='both', labelsize=25)
+ax[0].set_ylim(bottom=925., top=30.)
+heatmap = ax[1].contourf(
         lats,
         pressure_levels, 
         (hybrid_strip - speedy_strip)
     )
-cbar = plt.colorbar(heatmap, ax=axes)
-axes.set_ylabel('Pressure levels [hPa]')
-axes.set_xlabel('Latitude')
-axes.set_title('Hybrid - Speedy [K]')
-axes.set_ylim(bottom=925., top=30.)
-plt.savefig(os.path.join(hybrid_path, f'Zonal_temp_diff_pacific.png'))
+cbar = plt.colorbar(heatmap, ax=ax[1])
+cbar.ax.tick_params(labelsize=25)
+ax[1].set_ylabel('Pressure levels [hPa]', fontsize=30)
+ax[1].set_xlabel('Latitude', fontsize=30)
+ax[1].set_title('Hybrid - Speedy [K]', fontsize=30)
+ax[1].tick_params(axis='both', labelsize=25)
+ax[1].set_ylim(bottom=925., top=30.)
+plt.subplots_adjust(hspace=0.5)
+plt.savefig(os.path.join(hybrid_path, f'Zonal_temp_diff_pacific.png'), bbox_inches='tight')
 plt.show()
     

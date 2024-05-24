@@ -15,6 +15,17 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     vmax = int(np.ceil(max))
     boundaries = np.arange(vmin, vmax + 1)
 
+
+    desired_ticks = [0, 90, 180, 270]
+
+    # Transform the tick locations to the projection coordinates
+    projection = ccrs.PlateCarree(central_longitude=180)
+    projected_ticks = [projection.transform_point(x, 0, ccrs.Geodetic()) for x in desired_ticks]
+
+    # Set the x-ticks using the projected coordinates
+    ax.set_xticks([pt[0] for pt in projected_ticks])
+    ax.set_xticklabels(desired_ticks)
+
     if i == 2:
         thresh = 1/3
         nodes = [0, thresh, 2*thresh, 1.0]
@@ -22,7 +33,6 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
         cmap = mpl.colors.LinearSegmentedColormap.from_list("", list(zip(nodes, colors)))
         cmap.set_under("blue")
         cmap.set_over('red')
-
         heatmap= ax.contourf(
             speedy_lon_grid, 
             speedy_lat_grid, 
@@ -30,7 +40,8 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
             # levels = boundaries,
             extend = 'both',
             cmap=mpl.cm.PuOr,
-            norm=mpl.colors.CenteredNorm()
+            norm=mpl.colors.CenteredNorm(),
+            transform=ccrs.PlateCarree()
         )
     else:
         cmap = cmo.cm.balance_r
@@ -41,9 +52,10 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
             field_data,
             levels = boundaries,
             extend = 'both',
-            cmap=cmap
+            cmap=cmap,
+            transform=ccrs.PlateCarree()
         )
-    ax.set_xticks(ticks=[0, 90, 180, 270, 360])
+    # ax.set_xticks(ticks=[0, 90, 180, 270, 360])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect)
     cbar.ax.set_xlabel(f'{unit}')
@@ -52,13 +64,13 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     ax.set_title(title)
 
 
-hybrid_path = "/home/dan/Documents/speedy_mogp_hybrid/results/run_1/annual"
-speedy_path = "/home/dan/Documents/speedy_mogp_hybrid/results/speedy/annual"
-ERA5_path = "/home/dan/Documents/speedy_mogp_hybrid/ERA5"
+hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/stochastic_perturbs_05/run_3"
+speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
+ERA5_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/era5"
 
 
 # Set up the coordinate system
-lon = np.linspace(-180, 180, 96, endpoint=True)
+lon = np.linspace(0, 360, 96, endpoint=False)
 lat_vals = "-87.159 -83.479 -79.777 -76.070 -72.362 -68.652 -64.942 -61.232 -57.521 -53.810 -50.099 -46.389 -42.678 -38.967 -35.256 -31.545 -27.833 -24.122 -20.411 -16.700 -12.989  -9.278  -5.567  -1.856   1.856   5.567   9.278  12.989  16.700  20.411  24.122  27.833  31.545  35.256  38.967  42.678  46.389  50.099  53.810  57.521  61.232  64.942  68.652  72.362  76.070  79.777  83.479  87.159"
 lat = np.array([float(val) for val in lat_vals.split()])
 speedy_lon_grid, speedy_lat_grid = np.meshgrid(lon, lat)
@@ -77,19 +89,25 @@ for i, field in enumerate(fields):
     speedy = xr.load_dataset(os.path.join(speedy_path, f'{runs[1]}_{field}.nc'))[field]
     hybrid = hybrid.mean('timestamp')
     speedy = speedy.mean('timestamp')
+    hybrid = hybrid.assign_coords(longitude=lon)
+    speedy = speedy.assign_coords(longitude=lon)
   
     file_name = f'{era_field[i]}_10years'
     ds = xr.open_dataset(os.path.join(ERA5_path, f"{file_name}.nc"))[era_field[i]]
     era5 = ds.mean('time')
+    era5 = era5.assign_coords(longitude=lon)
+    era5 = era5.drop_vars('step')
+    era5 = era5.drop_vars('surface')
+    era5 = era5.drop_vars('number')
 
     # print(np.max(speedy), np.max(era5))
     speedy = speedy.T
     hybrid = hybrid.T
 
-    speedy_diff = speedy.values - era5.values
-    hybrid_diff = hybrid.values - era5.values
-
+    speedy_diff = speedy - era5
+    hybrid_diff = hybrid - era5
     diff = abs(hybrid_diff) - abs(speedy_diff)
+    # Global
     lon_grid, lat_grid = np.meshgrid(era5.longitude, era5.latitude+90)
 
     weighted_lat = np.sin(np.deg2rad(lat_grid))
@@ -108,30 +126,52 @@ for i, field in enumerate(fields):
     weighted_hybrid_rmse = np.sqrt(np.mean(hybrid_diff_scaled))
     # weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
     # weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
-    print("Weighted RMSE for speedy_diff:", weighted_speedy_rmse)
-    print("Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse)
-    print("Weighted area percent = ", (abs(weighted_speedy_rmse - weighted_hybrid_rmse)/ weighted_speedy_rmse)*100)
+    print("Global Weighted RMSE for speedy_diff:", weighted_speedy_rmse.values)
+    print("Global Weighted RMSE for hybrid_diff:", weighted_hybrid_rmse.values)
+    print("Global Weighted area percent = ", (abs(weighted_speedy_rmse.values - weighted_hybrid_rmse.values)/ weighted_speedy_rmse.values)*100)
 
-    rmse_speedy = np.sqrt((np.mean(speedy_diff**2)))
-    rmse_hybrid = np.sqrt((np.mean(hybrid_diff**2)))
-    print("SPEEDY RMSE =", rmse_speedy)
-    print("HYBRID RMSE =", rmse_hybrid)
+    # Tropics
+    lat_min = np.argmin(abs(lat_grid[:,0] - 66.564))
+    lat_max = np.argmin(abs(lat_grid[:,0] - 113.436))
+    tropic_weighted_lat = np.sin(np.deg2rad(lat_grid[lat_min+1 : lat_max, :]))
+    # Compute the square of the differences
+    LatIndexer = 'latitude'
+    tropic_speedy_diff = speedy_diff.sel(**{LatIndexer: slice(-23.436, 23.436)})
+    tropic_hybrid_diff = hybrid_diff.sel(**{LatIndexer: slice(-23.436, 23.436)})
+
+    tropic_speedy_diff_squared = tropic_speedy_diff ** 2
+    tropic_hybrid_diff_squared = tropic_hybrid_diff ** 2
+
+    # Scale the squared differences by the sine of the latitude
+    # speedy_diff_scaled = np.sum(speedy_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    # hybrid_diff_scaled = np.sum(hybrid_diff_squared * weighted_lat)/np.sum(weighted_lat)
+    tropic_speedy_diff_scaled = (tropic_speedy_diff_squared * tropic_weighted_lat)
+    tropic_hybrid_diff_scaled = (tropic_hybrid_diff_squared * tropic_weighted_lat)
+
+    # Calculate the square root to obtain the weighted RMSE
+    tropic_weighted_speedy_rmse = np.sqrt(np.mean(tropic_speedy_diff_scaled))
+    tropic_weighted_hybrid_rmse = np.sqrt(np.mean(tropic_hybrid_diff_scaled))
+    # weighted_speedy_rmse = np.sqrt(speedy_diff_scaled)
+    # weighted_hybrid_rmse = np.sqrt(hybrid_diff_scaled)
+    print("Tropics Weighted RMSE for speedy_diff:", tropic_weighted_speedy_rmse.values)
+    print("Tropics Weighted RMSE for hybrid_diff:", tropic_weighted_hybrid_rmse.values)
+    print("Tropics Weighted area percent = ", (abs(tropic_weighted_speedy_rmse.values - tropic_weighted_hybrid_rmse.values)/ tropic_weighted_speedy_rmse.values)*100)
 
     min = -1.0*np.max(speedy_diff)
     max = np.max(speedy_diff)
 
-    print(np.min(abs(speedy_diff) - abs(hybrid_diff)), np.max(abs(speedy_diff) - abs(hybrid_diff)))
+    print(np.min(abs(speedy_diff.values) - abs(hybrid_diff.values)), np.max(abs(speedy_diff.values) - abs(hybrid_diff.values)))
     # Create the first subplot in the top left
     ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy_diff, 
-             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse, decimals=2)}', 
+             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse.values, decimals=2)}', 
              units[i], -10, 10, i, 25)
    
 
     # Create the second subplot in the top right
     ax2 = fig.add_subplot(gs[0, 3:], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax2, hybrid_diff, 
-             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse, decimals=2)}', 
+             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse.values, decimals=2)}', 
              units[i], -10, 10, i, 25)
     
     # Create the third subplot in the bottom middle

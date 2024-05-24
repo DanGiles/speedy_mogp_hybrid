@@ -83,8 +83,8 @@ def read_oro_var() -> np.ndarray:
 def data_prep(data, oro, ls, nlon, nlat) -> np.ndarray:
     T_mean = data[:,:,16:24]
     Q_mean = data[:,:,24:29]
-    # low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
-    # Q_mean[low_values_flags] = 1e-6
+    low_values_flags = Q_mean[:,:] < 1e-6  # Where values are low
+    Q_mean[low_values_flags] = 1e-6
     # Version for gp_with_oro_var
     train = np.empty(((nlon*nlat),17), dtype = np.float64)
     train[:, 0] = data[:,:,32].flatten()
@@ -106,29 +106,32 @@ def mogp_prediction(mogp_inputs, trained_gp, nlon, nlat, nlev):
     resampled_T = np.empty((nlon*nlat*nlev), dtype = np.float64)
     resampled_Q = np.empty((nlon*nlat*nlev), dtype = np.float64)
     
-    # Rescale the Specific Humidity
-    # variance[8:,:] = variance[8:,:]/1000
-    # uncer[8:,:] = uncer[8:,:]/1000
+    # # Rescale the Specific Humidity
+    variance[8:,:] = variance[8:,:]/1000
+    uncer[8:,:] = uncer[8:,:]/1000
 
-    low_values_flags = variance < 1e-5  # Where values are low
+    low_values_flags = variance < 1e-6  # Where values are low
     variance[low_values_flags] = 0.0
 
     draws = np.random.normal(0, 1, np.shape(T_mean))
     resampled_T = T_mean.flatten() + draws.flatten() * (variance[:8,:].T.flatten() + uncer[:8,:].T.flatten())
-    resampled_Q = Q_mean.flatten() + draws.flatten() * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
+    resampled_Q = Q_mean.flatten() + draws[:,:5].flatten() * (variance[8:,:].T.flatten() + uncer[8:,:].T.flatten())
 
-    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, nlev))
+    resampled_Q = np.reshape(resampled_Q.T, (nlon*nlat, 5))
     resampled_T = np.reshape(resampled_T.T, (nlon*nlat, nlev))
 
+    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, 5))
     resampled_T = np.reshape(resampled_T, (nlon, nlat, nlev))
-    resampled_Q = np.reshape(resampled_Q, (nlon, nlat, nlev))
+    # print(f"Max std T = {np.amax(variance[:8,:])} and Q = {np.amax(variance[8:,:])}")
 
     return variance, uncer, resampled_T, resampled_Q
 
 
 def main():
+    HYBRID_data_root = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs"
+    SPEEDY_root = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/speedy_mogp_hybrid/speedy"
 
-    trained_gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
+    trained_gp = pickle.load(open(os.path.join(HYBRID_data_root, f"{GP_name}.pkl"), "rb"))
     print(trained_gp)
     print("Training Done!")
 
@@ -137,8 +140,8 @@ def main():
     nature_dir = os.path.join(SPEEDY_root, "DATA", "nature")
     oneshot_dir = os.path.join(HYBRID_data_root, "oneshot")
 
-    IDate = "1987060100"
-    dtDate = "1987060106"
+    IDate = "1987010100"
+    dtDate = "1987010106"
     nlon = 96
     nlat = 48
     nlev = 8
@@ -164,9 +167,9 @@ def main():
     print("Data Prep")
     variance, uncer, resampled_T, resampled_Q = mogp_prediction(mogp_input, trained_gp, nlon, nlat, nlev)
     print("Max T Difference %f"%(np.amax(data[:,:,16:24] - resampled_T[:,:,:])))
-    print("Max Q Difference %f"%(np.amax(data[:,:,24:32] - resampled_Q[:,:,:])))
+    print("Max Q Difference %f"%(np.amax(data[:,:,24:29] - resampled_Q[:,:,:])))
     data[:,:,16:24] = resampled_T[:,:,:]
-    data[:,:,24:32] = resampled_Q[:,:,:]
+    data[:,:,24:29] = resampled_Q[:,:,:]
 
     np.save(os.path.join(oneshot_dir, f"{IDate}_variance.npy"), variance)
     np.save(os.path.join(oneshot_dir, f"{IDate}_uncert.npy"), uncer)
