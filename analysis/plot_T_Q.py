@@ -26,7 +26,33 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     ax.set_xticks([pt[0] for pt in projected_ticks])
     ax.set_xticklabels(desired_ticks)
 
-    if i == 2:
+
+    if i == 0:
+        cmap = cmo.cm.deep
+
+        heatmap= ax.contourf(
+            speedy_lon_grid, 
+            speedy_lat_grid, 
+            field_data,
+            levels = boundaries,
+            extend = 'max',
+            cmap=cmap,
+            transform=ccrs.PlateCarree()
+        )
+    elif i == 1:
+        cmap = cmo.cm.balance_r
+
+        heatmap= ax.contourf(
+            speedy_lon_grid, 
+            speedy_lat_grid, 
+            field_data,
+            # levels = boundaries,
+            extend = 'both',
+            cmap=cmap,
+            norm=mpl.colors.CenteredNorm(),
+            transform=ccrs.PlateCarree()
+        )
+    elif i == 2 or i == 5:
         thresh = 1/3
         nodes = [0, thresh, 2*thresh, 1.0]
         colors = ["blue", "white", "white", "red"]
@@ -43,30 +69,30 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
             norm=mpl.colors.CenteredNorm(),
             transform=ccrs.PlateCarree()
         )
-    elif i == 1:
+    elif i == 3:
         cmap = cmo.cm.deep
 
         heatmap= ax.contourf(
             speedy_lon_grid, 
             speedy_lat_grid, 
             field_data,
-            levels = boundaries,
-            extend = 'max',
+            extend = 'both',
             cmap=cmap,
             transform=ccrs.PlateCarree()
         )
-    else:
+    elif i == 4:
         cmap = cmo.cm.balance_r
 
         heatmap= ax.contourf(
             speedy_lon_grid, 
             speedy_lat_grid, 
             field_data,
-            levels = boundaries,
             extend = 'both',
             cmap=cmap,
+            norm=mpl.colors.CenteredNorm(),
             transform=ccrs.PlateCarree()
         )
+
     # ax.set_xticks(ticks=[0, 90, 180, 270, 360])
     ax.set_yticks(ticks=[-90, -60, -30, 0, 30, 60, 90])
     cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', aspect=aspect)
@@ -75,10 +101,18 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
     ax.set_ylabel(r'Latitude ($^{\circ}$)')
     ax.set_title(title)
 
+def is_DJF(month):
+    return (month >= 12) | (month <= 2)
+
+def is_JJA(month):
+    return (month >= 6) & (month <= 8)
+
+def is_MAM(month):
+    return (month >= 3) & (month <= 5)
 
 hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/myriad/run_1"
 speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
-GPCP_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/gpcp"
+ERA5_path = "/Users/dangiles/Documents/Stats/MetOffice/weather_data_processing/weatherbench"
 
 
 # Set up the coordinate system
@@ -88,39 +122,52 @@ lat = np.array([float(val) for val in lat_vals.split()])
 speedy_lon_grid, speedy_lat_grid = np.meshgrid(lon, lat)
 
 runs = ['HYBRID', 'SPEEDY']
-fields = ['precip']
-gpcp_field = ['precip']
-field_names = ['Precipitation']
-units = ['mm/day']
+fields = ['T', 'Q']
+field_names = ['T_0', 'Q_0']
 
-fig = plt.figure(figsize=(20, 23))
-gs = fig.add_gridspec(3, 6)
+era_field_names = ['temperature', 'specific_humidity']
+units = ['K', 'kg/kg']
+
 
 for i, field in enumerate(fields):
-    hybrid = xr.load_dataset(os.path.join(hybrid_path, f'{runs[0]}_{field}.nc'))[field]
-    speedy = xr.load_dataset(os.path.join(speedy_path, f'{runs[1]}_{field}.nc'))[field]
-    hybrid = hybrid.mean('timestamp')
-    speedy = speedy.mean('timestamp')
-    hybrid = hybrid.assign_coords(longitude=lon)
+
+    fig = plt.figure(figsize=(20, 23))
+    gs = fig.add_gridspec(3, 6) 
+    hybrid = xr.load_dataset(os.path.join(hybrid_path, f'{runs[0]}_{field}.nc'))[field_names[i]]
+    hybrid = hybrid.rename({'timestamp': 'time'})
+    hybrid = hybrid.transpose('time', 'latitude', 'longitude')
+    
+    speedy = xr.load_dataset(os.path.join(speedy_path, f'{runs[1]}_{field}.nc'))[field_names[i]]
+    speedy = speedy.rename({'timestamp': 'time'})
+    speedy = speedy.transpose('time', 'latitude', 'longitude')
+    # hybrid = hybrid.mean('timestamp')
+    # speedy = speedy.mean('timestamp')
+    
+    # print(hybrid)
+    era5 = xr.open_dataset(os.path.join(ERA5_path, f"ERA_{field}.nc"))[era_field_names[i]]
+
+    hybrid = hybrid.assign_coords(time=era5.time)
+    speedy = speedy.assign_coords(time=era5.time)
+
+    era5 = era5.sel(time=is_JJA(era5['time.month']))
+    hybrid = hybrid.sel(time=is_JJA(hybrid['time.month']))
+    speedy = speedy.sel(time=is_JJA(speedy['time.month']))
+    
+    era5 = era5.mean('time')
+    speedy = speedy.mean('time')
+    hybrid = hybrid.mean('time')
+    era5 = era5.assign_coords(longitude=lon)
     speedy = speedy.assign_coords(longitude=lon)
-  
-    file_name = f'precipitation_inter'
-    gpcp = xr.open_dataset(os.path.join(GPCP_path, f"{file_name}.nc"))[gpcp_field[i]]
-    # era5 = ds.mean('time')
-    gpcp = gpcp.assign_coords(longitude=lon)
-    # era5 = era5.drop_vars('precip_error')
-    # era5 = era5.drop_vars('surface')
-    # era5 = era5.drop_vars('number')
+    hybrid = hybrid.assign_coords(longitude=lon)
+    # # 
+    # speedy = speedy.T
+    # hybrid = hybrid.T
 
-    # print(np.max(speedy), np.max(era5))
-    speedy = speedy.T
-    hybrid = hybrid.T
-
-    speedy_diff = speedy - gpcp
-    hybrid_diff = hybrid - gpcp
+    speedy_diff = speedy - era5
+    hybrid_diff = hybrid - era5
     diff = abs(hybrid_diff) - abs(speedy_diff)
     # Global
-    lon_grid, lat_grid = np.meshgrid(gpcp.longitude, gpcp.latitude+90)
+    lon_grid, lat_grid = np.meshgrid(era5.longitude, era5.latitude+90)
 
     weighted_lat = np.sin(np.deg2rad(lat_grid))
     # Compute the square of the differences
@@ -177,35 +224,35 @@ for i, field in enumerate(fields):
     ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy, 
              f'{field_names[i]} SPEEDY', 
-             units[i], 0, 15, 1, 25)
+             units[i], np.min(era5), np.max(era5), (i*3), 25)
    
 
     # Create the second subplot in the top right
     ax2 = fig.add_subplot(gs[0, 3:], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax2, hybrid, 
              f'{field_names[i]} Hybrid', 
-             units[i], 0, 15, 1, 25)
+             units[i], np.min(era5), np.max(era5), (i*3), 25)
     
     # Create the first subplot in the top left
     ax1 = fig.add_subplot(gs[1, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy_diff, 
-             f'{field_names[i]} (SPEEDY - GPCP) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse.values, decimals=2)}', 
-             units[i], -10, 10, i, 25)
+             f'{field_names[i]} (SPEEDY - ERA5) \n Area-Weighted RMSE = {np.around(weighted_speedy_rmse.values, decimals=2)}', 
+             units[i], np.min(speedy_diff), np.max(speedy_diff), (i*3)+1, 25)
    
 
     # Create the second subplot in the top right
     ax2 = fig.add_subplot(gs[1, 3:], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax2, hybrid_diff, 
-             f'{field_names[i]} (Hybrid - GPCP) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse.values, decimals=2)}', 
-             units[i], -10, 10, i, 25)
+             f'{field_names[i]} (Hybrid - ERA5) \n Area-Weighted RMSE = {np.around(weighted_hybrid_rmse.values, decimals=2)}', 
+             units[i], np.min(speedy_diff), np.max(speedy_diff), (i*3)+1, 25)
     
     # Create the third subplot in the bottom middle
     ax3 = fig.add_subplot(gs[2, 1:5], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax3, abs(hybrid_diff) - abs(speedy_diff), 
-             '|Hybrid - GPCP| - |SPEEDY - GPCP|', 
-             units[i], np.min(hybrid_diff - speedy_diff), np.max(hybrid_diff - speedy_diff), 2, 40)
+             '|Hybrid - ERA5| - |SPEEDY - ERA5|', 
+             units[i], np.min(hybrid_diff - speedy_diff), np.max(hybrid_diff - speedy_diff), (i*3)+2, 40)
 
 
-plt.subplots_adjust(wspace=0.3, hspace=0.1)
-plt.savefig(os.path.join(hybrid_path, "GPCP_diff.png"), dpi = 300, bbox_inches='tight')
-plt.show()
+    plt.subplots_adjust(wspace=0.3, hspace=0.1)
+    plt.savefig(os.path.join(hybrid_path, f"ERA5_{field}_JJA_diff.png"), dpi = 300, bbox_inches='tight')
+    plt.show()
