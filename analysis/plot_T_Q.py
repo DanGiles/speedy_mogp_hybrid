@@ -111,7 +111,7 @@ def is_MAM(month):
     return (month >= 3) & (month <= 5)
 
 hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/myriad/run_1"
-speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
+speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy_myriad/annual"
 ERA5_path = "/Users/dangiles/Documents/Stats/MetOffice/weather_data_processing/weatherbench"
 
 
@@ -140,18 +140,15 @@ for i, field in enumerate(fields):
     speedy = xr.load_dataset(os.path.join(speedy_path, f'{runs[1]}_{field}.nc'))[field_names[i]]
     speedy = speedy.rename({'timestamp': 'time'})
     speedy = speedy.transpose('time', 'latitude', 'longitude')
-    # hybrid = hybrid.mean('timestamp')
-    # speedy = speedy.mean('timestamp')
-    
-    # print(hybrid)
+
     era5 = xr.open_dataset(os.path.join(ERA5_path, f"ERA_{field}.nc"))[era_field_names[i]]
 
     hybrid = hybrid.assign_coords(time=era5.time)
     speedy = speedy.assign_coords(time=era5.time)
 
-    era5 = era5.sel(time=is_JJA(era5['time.month']))
-    hybrid = hybrid.sel(time=is_JJA(hybrid['time.month']))
-    speedy = speedy.sel(time=is_JJA(speedy['time.month']))
+    # era5 = era5.sel(time=is_MAM(era5['time.month']))
+    # hybrid = hybrid.sel(time=is_MAM(hybrid['time.month']))
+    # speedy = speedy.sel(time=is_MAM(speedy['time.month']))
     
     era5 = era5.mean('time')
     speedy = speedy.mean('time')
@@ -159,10 +156,7 @@ for i, field in enumerate(fields):
     era5 = era5.assign_coords(longitude=lon)
     speedy = speedy.assign_coords(longitude=lon)
     hybrid = hybrid.assign_coords(longitude=lon)
-    # # 
-    # speedy = speedy.T
-    # hybrid = hybrid.T
-
+    # Calculate differences
     speedy_diff = speedy - era5
     hybrid_diff = hybrid - era5
     diff = abs(hybrid_diff) - abs(speedy_diff)
@@ -254,5 +248,5 @@ for i, field in enumerate(fields):
 
 
     plt.subplots_adjust(wspace=0.3, hspace=0.1)
-    plt.savefig(os.path.join(hybrid_path, f"ERA5_{field}_JJA_diff.png"), dpi = 300, bbox_inches='tight')
+    plt.savefig(os.path.join(hybrid_path, f"ERA5_{field}_annual_diff.png"), dpi = 300, bbox_inches='tight')
     plt.show()
