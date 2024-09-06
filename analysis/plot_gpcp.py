@@ -77,7 +77,7 @@ def plot_map(ax, field_data, title, unit, min, max, i, aspect) -> None:
 
 
 hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/myriad/run_1"
-speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
+speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy_myriad/annual"
 GPCP_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/gpcp"
 
 
@@ -106,13 +106,8 @@ for i, field in enumerate(fields):
   
     file_name = f'precipitation_inter'
     gpcp = xr.open_dataset(os.path.join(GPCP_path, f"{file_name}.nc"))[gpcp_field[i]]
-    # era5 = ds.mean('time')
     gpcp = gpcp.assign_coords(longitude=lon)
-    # era5 = era5.drop_vars('precip_error')
-    # era5 = era5.drop_vars('surface')
-    # era5 = era5.drop_vars('number')
 
-    # print(np.max(speedy), np.max(era5))
     speedy = speedy.T
     hybrid = hybrid.T
 
@@ -172,7 +167,6 @@ for i, field in enumerate(fields):
     min = -1.0*np.max(speedy_diff)
     max = np.max(speedy_diff)
 
-    print(np.min(abs(speedy_diff.values) - abs(hybrid_diff.values)), np.max(abs(speedy_diff.values) - abs(hybrid_diff.values)))
     # Create the first subplot in the top left
     ax1 = fig.add_subplot(gs[0, 0:3], projection=ccrs.PlateCarree(central_longitude=180))
     plot_map(ax1, speedy, 

@@ -56,64 +56,66 @@ speedy = speedy_data.mean('timestamp')
 speedy = speedy.sel(latitude=slice(-30, 30))
 speedy = speedy.sel(longitude=slice(11.25, 101.25))
 
-hybrid_strip = hybrid.mean('longitude')
-speedy_strip = speedy.mean('longitude')
+print(speedy.latitude)
 
-print(hybrid_strip)
+# hybrid_strip = hybrid.mean('longitude')
+# speedy_strip = speedy.mean('longitude')
 
-hybrid_level = np.zeros((nlev, len(speedy.latitude)))
-speedy_level = np.zeros((nlev, len(speedy.latitude)))
+# print(hybrid_strip)
 
-for lev in range(nlev):
-    hybrid_level[lev, :] = hybrid_strip[f"T_{lev}"]
-    speedy_level[lev, :] = speedy_strip[f"T_{lev}"]
+# hybrid_level = np.zeros((nlev, len(speedy.latitude)))
+# speedy_level = np.zeros((nlev, len(speedy.latitude)))
 
-
-np.save(os.path.join(speedy_path, 'Speedy_Hadley_T.npy'), speedy_level)
-np.save(os.path.join(hybrid_path, 'Hybrid_Hadley_T.npy'), hybrid_level)
+# for lev in range(nlev):
+#     hybrid_level[lev, :] = hybrid_strip[f"T_{lev}"]
+#     speedy_level[lev, :] = speedy_strip[f"T_{lev}"]
 
 
-fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(21,7))
-ax = axes.flatten()
-heatmap = ax[0].contourf(
-        speedy.latitude,
-        pressure_levels, 
-        (speedy_level)
-    )
-cbar = plt.colorbar(heatmap, ax=ax[0])
-cbar.ax.tick_params(labelsize=15)
-ax[0].set_ylabel('Pressure levels [hPa]', fontsize=20)
-ax[0].set_xlabel('Latitude', fontsize=20)
-ax[0].set_title('Speedy [K]', fontsize=20)
-ax[0].tick_params(axis='both', labelsize=20)
-ax[0].set_ylim(bottom=925., top=30.)
+# np.save(os.path.join(speedy_path, 'Speedy_Hadley_T.npy'), speedy_level)
+# np.save(os.path.join(hybrid_path, 'Hybrid_Hadley_T.npy'), hybrid_level)
 
-heatmap = ax[1].contourf(
-        speedy.latitude,
-        pressure_levels, 
-        (hybrid_level)
-    )
-cbar = plt.colorbar(heatmap, ax=ax[1])
-cbar.ax.tick_params(labelsize=15)
-# ax[1].set_ylabel('Pressure levels [hPa]', fontsize=20)
-ax[1].set_xlabel('Latitude', fontsize=20)
-ax[1].set_title('Hybrid [K]', fontsize=20)
-ax[1].tick_params(axis='both', labelsize=20)
-ax[1].set_ylim(bottom=925., top=30.)
 
-heatmap = ax[2].contourf(
-        speedy.latitude,
-        pressure_levels, 
-        (hybrid_level - speedy_level)
-    )
-cbar = plt.colorbar(heatmap, ax=ax[2])
-cbar.ax.tick_params(labelsize=15)
-# ax[2].set_ylabel('Pressure levels [hPa]', fontsize=20)
-ax[2].set_xlabel('Latitude', fontsize=20)
-ax[2].set_title('Hybrid - Speedy [K]', fontsize=20)
-ax[2].tick_params(axis='both', labelsize=20)
-ax[2].set_ylim(bottom=925., top=30.)
-plt.subplots_adjust(hspace=0.5)
-plt.savefig(os.path.join(hybrid_path, f'Zonal_temp_diff_pacific.png'), bbox_inches='tight')
-plt.show()
+# fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(21,7))
+# ax = axes.flatten()
+# heatmap = ax[0].contourf(
+#         speedy.latitude,
+#         pressure_levels, 
+#         (speedy_level)
+#     )
+# cbar = plt.colorbar(heatmap, ax=ax[0])
+# cbar.ax.tick_params(labelsize=15)
+# ax[0].set_ylabel('Pressure levels [hPa]', fontsize=20)
+# ax[0].set_xlabel('Latitude', fontsize=20)
+# ax[0].set_title('SPEEDY [K]', fontsize=20)
+# ax[0].tick_params(axis='both', labelsize=20)
+# ax[0].set_ylim(bottom=925., top=30.)
+
+# heatmap = ax[1].contourf(
+#         speedy.latitude,
+#         pressure_levels, 
+#         (hybrid_level)
+#     )
+# cbar = plt.colorbar(heatmap, ax=ax[1])
+# cbar.ax.tick_params(labelsize=15)
+# # ax[1].set_ylabel('Pressure levels [hPa]', fontsize=20)
+# ax[1].set_xlabel('Latitude', fontsize=20)
+# ax[1].set_title('Hybrid [K]', fontsize=20)
+# ax[1].tick_params(axis='both', labelsize=20)
+# ax[1].set_ylim(bottom=925., top=30.)
+
+# heatmap = ax[2].contourf(
+#         speedy.latitude,
+#         pressure_levels, 
+#         (hybrid_level - speedy_level)
+#     )
+# cbar = plt.colorbar(heatmap, ax=ax[2])
+# cbar.ax.tick_params(labelsize=15)
+# # ax[2].set_ylabel('Pressure levels [hPa]', fontsize=20)
+# ax[2].set_xlabel('Latitude', fontsize=20)
+# ax[2].set_title('Hybrid - SPEEDY [K]', fontsize=20)
+# ax[2].tick_params(axis='both', labelsize=20)
+# ax[2].set_ylim(bottom=925., top=30.)
+# plt.subplots_adjust(hspace=0.5)
+# plt.savefig(os.path.join(hybrid_path, f'Zonal_temp_diff_pacific.png'), bbox_inches='tight')
+# plt.show()
     

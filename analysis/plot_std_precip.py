@@ -207,7 +207,7 @@ plot_map(ax3, abs(hybrid_diff) - abs(speedy_diff),
 # Differences of Stds
 ax3 = fig.add_subplot(gs[2, 3:], projection=ccrs.PlateCarree(central_longitude=180))
 plot_map(ax3, hybrid_std.T - speedy_std.T, 
-            '$\sigma_{Hybrid} - \sigma_{Speedy}$', 
+            '$\sigma_{Hybrid} - \sigma_{SPEEDY}$', 
             'mm/day', np.min(hybrid_std - speedy_std), np.max(hybrid_std - speedy_std), 2, 40)
 
 

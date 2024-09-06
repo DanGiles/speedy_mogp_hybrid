@@ -41,7 +41,8 @@ for val, var in enumerate(vars):
         axes.plot(ground_truth[v,:], ground_truth[v,:], '-')
         axes.plot(ground_truth[v,:], 10*inputs[v+4,:], 'x', label=r'$\epsilon = 0.01$')
         axes.plot(ground_truth[v,:], 50*inputs[v+4,:], '+', label=r'$\epsilon = 0.05$')
-        axes.errorbar(ground_truth[v,:], predicted[v,:], yerr=uncer[v, :], fmt='o')
+        axes.errorbar(ground_truth[v,:], predicted[v,:], yerr=uncer[v, :], fmt='o', label='MOGP')
+        axes.legend()
         axes.set_title(f"Atmospheric Level 0")
         axes.set_ylabel("Predicted std [g/kg]")
 
@@ -50,7 +51,8 @@ for val, var in enumerate(vars):
         axes.plot(ground_truth[v+1,:], ground_truth[v+1,:], '-')
         axes.plot(ground_truth[v+1,:], 10*inputs[v+5,:], 'x', label=r'$\epsilon = 0.01$')
         axes.plot(ground_truth[v+1,:], 50*inputs[v+5,:], '+', label=r'$\epsilon = 0.05$')
-        axes.errorbar(ground_truth[v+1,:], predicted[v+1,:], yerr=uncer[v+1, :], fmt='o')
+        axes.errorbar(ground_truth[v+1,:], predicted[v+1,:], yerr=uncer[v+1, :], fmt='o', label='MOGP')
+        axes.legend()
         axes.set_title(f"Atmospheric Level 1")
 
 
@@ -58,14 +60,16 @@ for val, var in enumerate(vars):
         axes.plot(ground_truth[v+2,:], ground_truth[v+2,:], '-')
         axes.plot(ground_truth[v+2,:], 10*inputs[v+6,:], 'x', label=r'$\epsilon = 0.01$')
         axes.plot(ground_truth[v+2,:], 50*inputs[v+6,:], '+', label=r'$\epsilon = 0.05$')
-        axes.errorbar(ground_truth[v+2,:], predicted[v+2,:], yerr=uncer[v+2, :], fmt='o')
+        axes.errorbar(ground_truth[v+2,:], predicted[v+2,:], yerr=uncer[v+2, :], fmt='o', label='MOGP')
+        axes.legend()
         axes.set_title(f"Atmospheric Level 2")
 
         axes = fig.add_subplot(gs[1, 1:3])
         axes.plot(ground_truth[v+3,:], ground_truth[v+3,:], '-')
         axes.plot(ground_truth[v+3,:], 10*inputs[v+7,:], 'x', label=r'$\epsilon = 0.01$')
         axes.plot(ground_truth[v+3,:], 50*inputs[v+7,:], '+', label=r'$\epsilon = 0.05$')
-        axes.errorbar(ground_truth[v+3,:], predicted[v+3,:], yerr=uncer[v+3, :], fmt='o')
+        axes.errorbar(ground_truth[v+3,:], predicted[v+3,:], yerr=uncer[v+3, :], fmt='o', label='MOGP')
+        axes.legend()
         axes.set_title(f"Atmospheric Level 3")
         axes.set_ylabel("Predicted std [g/kg]")
         axes.set_xlabel("Ground truth std [g/kg]")
@@ -75,7 +79,8 @@ for val, var in enumerate(vars):
         axes.plot(ground_truth[v+4,:], ground_truth[v+4,:], '-')
         axes.plot(ground_truth[v+4,:], 10*inputs[v+8,:], 'x', label=r'$\epsilon = 0.01$')
         axes.plot(ground_truth[v+4,:], 50*inputs[v+8,:], '+', label=r'$\epsilon = 0.05$')
-        axes.errorbar(ground_truth[v+4,:], predicted[v+4,:], yerr=uncer[v+4, :], fmt='o')
+        axes.errorbar(ground_truth[v+4,:], predicted[v+4,:], yerr=uncer[v+4, :], fmt='o', label='MOGP')
+        axes.legend()
         axes.set_title(f"Atmospheric Level 4")
         axes.set_xlabel("Ground truth std [g/kg]")
 
