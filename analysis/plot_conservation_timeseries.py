@@ -12,15 +12,16 @@ import matplotlib.pyplot as plt
 from script_variables import *
 
 fig, ax = plt.subplots(2, 1, figsize=(10, 10))
-for run in ['SPEEDY', 'HYBRID']:
-# for run in ['HYBRID']:
+# for run in ['SPEEDY', 'HYBRID']:
+# for run in ['SPEEDY']:
+for run in ['HYBRID']:
     print(run)
     water_and_energy = xr.open_dataset(f'data/analysis/annual/{run}_water_and_energy.nc', engine='netcdf4', chunks={'timestamp': 500})
     
     # Fix the longitude to a single point 90. 270 would also work well?
     lon = 90
     # lats = np.linspace(-80, 70, 5, endpoint=False)
-    lats = [25]
+    lats = [25, -25]
 
     w_e_lon = water_and_energy.sel(longitude=lon, method='nearest')
     # print(w_e_lon, '\n')
@@ -29,6 +30,7 @@ for run in ['SPEEDY', 'HYBRID']:
     for lat in lats:
         # The plan was to plot several locations on the same graph, but the data is too noisy and hard to read.
         w_e_lon_lat = w_e_lon.sel(latitude=lat, method='nearest')
+        w_e_lon_lat = w_e_lon_lat.sel(timestamp=slice(0, 2000))
         ax[0].plot(w_e_lon_lat['timestamp'], w_e_lon_lat['total_water_content'], label=f'{run} {lat}° lat')
         ax[1].plot(w_e_lon_lat['timestamp'], w_e_lon_lat['static_energy'], label=f'{run} {lat}° lat')
 
