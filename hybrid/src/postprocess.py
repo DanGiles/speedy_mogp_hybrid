@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List
 import xarray as xr
 import sys
 
