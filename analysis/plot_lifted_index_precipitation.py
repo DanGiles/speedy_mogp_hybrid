@@ -2,11 +2,13 @@ import os
 import numpy as np
 from scipy.stats import skew, kurtosis
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import matplotlib as mpl
-import cartopy.feature as cfeature
-from typing import List
 import xarray as xr
+
+
+############### READ ME ####################
+# RUN `create_lifted_index_from_nc.py` FIRST
+############################################
+
 
 def round_nearest_half(x):
     return round(x * 2.0)/2
@@ -23,11 +25,9 @@ lons = np.linspace(0, 360, nlon, endpoint=False) # endpoint=False to match SPEED
 lat_vals = "-87.159 -83.479 -79.777 -76.070 -72.362 -68.652 -64.942 -61.232 -57.521 -53.810 -50.099 -46.389 -42.678 -38.967 -35.256 -31.545 -27.833 -24.122 -20.411 -16.700 -12.989  -9.278  -5.567  -1.856   1.856   5.567   9.278  12.989  16.700  20.411  24.122  27.833  31.545  35.256  38.967  42.678  46.389  50.099  53.810  57.521  61.232  64.942  68.652  72.362  76.070  79.777  83.479  87.159"
 lats = np.array([float(val) for val in lat_vals.split()])
 
-# poi = [(9, 23), (8, 24), (21, 26) , (21, 25) , (22, 25), 
-#        (28, 24), (29, 24), (30, 24), (70, 26), (71, 26), 
-#        (72, 26), (73, 26), (74, 26), (75, 26), (90, 23), 
-#        (93, 25)]
-
+# Assign a list of tuples for the points of interest. 
+# Must be in the form (lon, lat). 
+# More points can be added to the list.
 poi = [(9, 23), (80,20)]
 
 output_dir = os.path.join(hybrid_path, 'global_lifted_index')

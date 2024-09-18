@@ -1,17 +1,11 @@
 ########################### READ ME ###########################
 # This script only uses the first 5 variables for both Q and T.
 # This is inline with the current implementation in `wrapper.py`.
-# Change lines 26, 40 and 41 if you want to use all variables.
+# Change lines 20, 35 and 36 if you want to use all variables.
 ###############################################################
 
-import os
 import numpy as np
-# from datetime import datetime, date, timedelta
-# import shutil # for removing data from previous simulations
-# import pickle
-# import sys
-
-import xarray as xr # groupBy operations are faster if package flox is installed
+import xarray as xr
 
 from script_variables import *
 

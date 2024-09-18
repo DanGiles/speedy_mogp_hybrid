@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import cartopy.crs as ccrs
-import cartopy
 import xarray as xr
 
 # from script_variables import *
@@ -11,7 +10,7 @@ import xarray as xr
 hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/run_1/annual"
 speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
 ##### COMMENT OUT ONE LINE AS NEEDED #####
-# neutral_or_warm = 'warm'
+# neutral_or_warm = 'warm' # no longer used. Previously used for small climate change runs, since removed from manuscript.
 neutral_or_warm = 'neutral'
 #################################
 

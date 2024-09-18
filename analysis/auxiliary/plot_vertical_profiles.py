@@ -7,7 +7,6 @@ import numpy as np
 import mogp_emulator
 import pickle
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 from script_variables import *
 
 output_path = os.path.join(pngs_root, GP_name)

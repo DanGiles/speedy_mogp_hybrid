@@ -1,11 +1,7 @@
 import os
 import numpy as np
-from scipy.stats import skew, kurtosis
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 import matplotlib as mpl
-import cartopy.feature as cfeature
-from typing import List
 
 from script_variables import *
 
