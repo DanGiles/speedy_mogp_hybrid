@@ -8,8 +8,8 @@ import xarray as xr
 
 # from script_variables import *
 
-hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/run_1/annual"
-speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy/annual"
+hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/myriad/run_1"
+speedy_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/speedy_myriad/annual"
 ##### COMMENT OUT ONE LINE AS NEEDED #####
 # neutral_or_warm = 'warm'
 neutral_or_warm = 'neutral'
@@ -106,16 +106,17 @@ for i, field in enumerate(vars):
         cmap = mpl.cm.PuOr
     scalarmap = plot_map_mask(axes.flat[i], diff.T, t_test_statistics.T, vmin, vmax, f'{title}', units, cmap, 25)
     if field == 'precip' and neutral_or_warm == 'neutral':
-        x_low = 25 #could change to 30/35 if desired
-        x_high = 100
-        y_low = -89 # stands out more than 90
-        y_high = 89
+        x_low = (180 - 168.75) #11.25 #could change to 30/35 if desired
+        x_high = (180 - 78.75) # 101.25
+        y_low = 0 # stands out more than 90
+        y_high = 15
         axes.flat[i].vlines(x_low, y_low, y_high, color='red')
         axes.flat[i].vlines(x_high, y_low, y_high, color='red')
         axes.flat[i].hlines(y_high, x_low, x_high, color='red')
         axes.flat[i].hlines(y_low, x_low, x_high, color='red')
-    # fig.colorbar(scalarmap, ax=axes.flat[i])
+        axes.flat[i].plot((33.75-180), -1.856, '*', color='r')
+plt.suptitle("Hybrid - SPEEDY")
 plt.subplots_adjust(wspace=0.3, hspace=0.2)
 plt.savefig(os.path.join(output_path, f'hybrid_speedy_diffs_masked_{neutral_or_warm}.png'), dpi=300, bbox_inches='tight')
-# plt.show()
+plt.show()
 plt.close()

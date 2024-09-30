@@ -63,3 +63,8 @@ The script `/hybrid/src/run-speedy.sh` launches the `wrapper.py` script which wi
 A few changes have been made to this code to suit our scientific needs.
 
 Line 16 of `/speedy/model/source/makefile` has been commented out to ensure endianness of the programm remains consistent with the system default.
+
+
+### Download GPCP Data
+
+To download the Global Precipitation Climatology Project data please ensure that you have set up the api correctly. Instructions can be found [here](https://cds.climate.copernicus.eu/how-to-api).
