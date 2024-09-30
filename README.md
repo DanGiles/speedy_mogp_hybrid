@@ -68,3 +68,6 @@ Line 16 of `/speedy/model/source/makefile` has been commented out to ensure endi
 # 3. Analysis
 
 See `analysis/READ_ME.md` for details on running the scripts which generate the figures in the manuscript.
+
+### Download ERA5 and GPCP Data
+To download the `ground truth` ERA5 and GPCP data see `data_download` directory. The Global Precipitation Climatology Project data can be downloaded from Copernicus but please ensure that you have set up the api correctly. Instructions can be found [here](https://cds.climate.copernicus.eu/how-to-api). The ERA5 temperature and specific humidity data is downloaded from the WeatherBench2 [project](https://weatherbench2.readthedocs.io/en/latest/). 
