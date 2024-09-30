@@ -30,22 +30,22 @@ cp $SPEEDY/model/source/*.s .
 echo "Patching configuration parameters"
 if [[ "$nat_res" = "t39" ]]
 then
-    sed -i "s/NTRUN/39/g" mod_atparam.f90
-    sed -i "s/NLON/120/g" mod_atparam.f90
-    sed -i "s/NLAT/60/g" mod_atparam.f90
-    sed -i "s/NSTEPS/72/g" mod_tsteps.f90
+    sed -i '' -e "s/NTRUN/39/g" mod_atparam.f90
+    sed -i '' -e "s/NLON/120/g" mod_atparam.f90
+    sed -i '' -e "s/NLAT/60/g" mod_atparam.f90
+    sed -i '' -e "s/NSTEPS/72/g" mod_tsteps.f90
 elif [[ "$nat_res" = "t30" ]]
 then
-    sed -i "s/NTRUN/30/g" mod_atparam.f90
-    sed -i "s/NLON/96/g" mod_atparam.f90
-    sed -i "s/NLAT/48/g" mod_atparam.f90
-    sed -i "s/NSTEPS/36/g" mod_tsteps.f90
+    sed -i '' -e "s/NTRUN/30/g" mod_atparam.f90
+    sed -i '' -e "s/NLON/96/g" mod_atparam.f90
+    sed -i '' -e "s/NLAT/48/g" mod_atparam.f90
+    sed -i '' -e "s/NSTEPS/36/g" mod_tsteps.f90
 fi
-sed -i "s/NMONTS/3/g" mod_tsteps.f90
-sed -i "s/NMONRS/3/g" mod_tsteps.f90
-sed -i "s/SIXHRRUN/.true./g" mod_tsteps.f90
-sed -i "s/IHOUT/.true./g" mod_tsteps.f90
-sed -i "s/IPOUT/.true./g" mod_tsteps.f90
+sed -i '' -e "s/NMONTS/3/g" mod_tsteps.f90
+sed -i '' -e "s/NMONRS/3/g" mod_tsteps.f90
+sed -i '' -e "s/IHOUT/.true./g" mod_tsteps.f90
+sed -i '' -e "s/IPOUT/.true./g" mod_tsteps.f90
+sed -i '' -e "s/SIXHRRUN/.true./g" mod_tsteps.f90
 
 make -s imp
 
@@ -93,4 +93,4 @@ done
 
 echo "Cleaning up"
 cd ..
-rm -rf $TMPDIR
+# rm -rf $TMPDIR

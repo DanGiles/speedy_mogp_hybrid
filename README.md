@@ -28,7 +28,7 @@ where `<day>` is an integer. In this case, day takes values 1, 2, ..., 10.
 
 ### `run_first.sh`
 
-Run the script `/speedy/model/run/run_first.sh`. This builds the speedy executable and simulates a 12 month forecast: 1981/01/01-1982/01/01.
+Run the script `/speedy/model/run/run_first.sh`. This builds the SPEEDY executable and simulates a 12 month forecast: 1981/01/01-1982/01/01.
 
 This script takes about 5 minutes to complete.
 
@@ -38,7 +38,7 @@ Run the script `/speedy/model/run/run_cylce.sh`. This script rebuilds the SPEEDY
 
 This script takes about ?? to complete
 
-# 2. Speedy Hybrid
+# 2. SPEEDY Hybrid
 
 ## Prior to GP training or running SPEEDY Hybrid
 
@@ -65,6 +65,9 @@ A few changes have been made to this code to suit our scientific needs.
 Line 16 of `/speedy/model/source/makefile` has been commented out to ensure endianness of the programm remains consistent with the system default.
 
 
-### Download GPCP Data
+# 3. Analysis
 
-To download the Global Precipitation Climatology Project data please ensure that you have set up the api correctly. Instructions can be found [here](https://cds.climate.copernicus.eu/how-to-api).
+See `analysis/READ_ME.md` for details on running the scripts which generate the figures in the manuscript.
+
+### Download ERA5 and GPCP Data
+To download the `ground truth` ERA5 and GPCP data see `data_download` directory. The Global Precipitation Climatology Project data can be downloaded from Copernicus but please ensure that you have set up the api correctly. Instructions can be found [here](https://cds.climate.copernicus.eu/how-to-api). The ERA5 temperature and specific humidity data is downloaded from the WeatherBench2 [project](https://weatherbench2.readthedocs.io/en/latest/). 

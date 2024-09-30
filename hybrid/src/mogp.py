@@ -82,6 +82,7 @@ def plot_mogp_predictions(
     )
     plt.close()
 
+
 def sampler(
         X:np.ndarray, 
         Y:np.ndarray,
@@ -89,9 +90,17 @@ def sampler(
         ls:np.ndarray,
         n_size: int
     ):
+    """Sample the data for training the MOGP. Each subregion is sampled exactly n_size times.
+    
+    :param X: Processed input data
+    :param Y: Processed target data
+    :param oro: Orography data
+    :param ls: Land-sea ratio data
+    :param n_size: The number of samples to take for each subregion
+    """
 
     rng = np.random.default_rng()
-    regions = region_count*subregion_count
+    regions = region_count*subregion_count # these variables are stored in `script_variables.py`.
     X_split = np.zeros((3, UM_levels, regions, n_size))
     Y_split = np.zeros((2, UM_levels, regions, n_size))
     oro_split = np.zeros((2, regions, n_size))
@@ -99,8 +108,12 @@ def sampler(
 
     indx = np.zeros((regions, n_size, 2))
 
+    # iterate over the regions
     for region in range(regions):
+        # Randomly sample the timesteps and days
         indices = np.unravel_index(rng.integers((num_timesteps*num_days), size=n_size), (num_timesteps, num_days))
+
+        # extract the data for the sampled timesteps and days
         X_split[:, :, region, :] = X[:, :, region, indices[0], indices[1]]
         Y_split[:, :, region, :] = Y[:, :, region, indices[0], indices[1]]
         oro_split[:, region, :] =  np.repeat(oro[:, region, np.newaxis], n_size, axis=1)
@@ -115,7 +128,13 @@ def sampler(
 
     return X_split, Y_split, oro_split, ls_split, indx.astype(int)
 
+
 def crop_speedy(array: np.ndarray, sigma_levels: np.ndarray) -> np.ndarray:
+    """Crop the array to the sigma levels.
+
+    :param array: The array to crop
+    :param sigma_levels: The sigma levels to crop to
+    """
     indices = np.zeros(len(sigma_levels), dtype=int)
     # Convert to sigma coordinates
     array = array/array[0]
@@ -124,12 +143,18 @@ def crop_speedy(array: np.ndarray, sigma_levels: np.ndarray) -> np.ndarray:
         indices[j] = np.argmin(np.abs(sigma_levels[j] - array))
     return indices
 
+
 def map_to_speedy_pressure_levels(X: np.ndarray, Y: np.ndarray):
-    "Pressure Levels in Speedy defined on sigma levels"
+    """Map the data to the Speedy pressure levels.
+
+    :param X: The input data
+    :param Y: The target data
+    """
+    # Pressure Levels in Speedy defined on sigma levels
     # pressure_level = [3000, 10000, 20000, 30000, 50000, 70000, 85000, 92500]
     sigma_levels = [0.95, 0.835, 0.685, 0.51, 0.34, 0.20, 0.095, 0.025]
-    # sigma_levels = [0.025, 0.095, 0.2, 0.34, 0.51, 0.685, 0.835, 0.95]
     # pressure_level = np.flip(pressure_level)
+
     X_new = np.zeros((3, len(sigma_levels), X.shape[2]))
     Y_new = np.zeros((2, len(sigma_levels), Y.shape[2]))
 
@@ -142,7 +167,14 @@ def map_to_speedy_pressure_levels(X: np.ndarray, Y: np.ndarray):
 
 
 def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
-
+    """Wrangle the data for training the MOGP.
+    
+    :param X: The input data
+    :param X_ps: The surface level air pressure
+    :param oro: The orography data
+    :param ls: The land-sea ratio data
+    :param y: The target data
+    """
     train = np.empty((20, X.shape[2]), dtype = np.float64)
 
     train[0, :] = X_ps  #surface level AVG air pressure
@@ -158,19 +190,25 @@ def data_prep(X, X_ps, oro, ls, y) -> Tuple[np.ndarray, np.ndarray]:
 
     return train, target
 
+
 def loop_through_days(processed_data_root):
+    """Loop through the processed data and load the data for each day
+    
+    :param processed_data_root: The root directory of the processed data
+    """
     X = np.zeros(
         (3, UM_levels, (region_count*subregion_count), num_timesteps, num_days)
     )
-    #(3, UM_levels, subregion_count, region_count, len(time))
     Y = np.zeros(
         (2, UM_levels, (region_count*subregion_count), num_timesteps, num_days)
     )
-    for day in range(0,num_days):
+
+    for day in range(0, num_days):
         X[...,day] = np.load(os.path.join(processed_data_root, f"202001{(day+1):02d}_mean.npy"))
         Y[...,day] = np.load(os.path.join(processed_data_root, f"202001{(day+1):02d}_std.npy"))
 
     return X, Y
+
 
 def train_mogp():
 
@@ -183,8 +221,8 @@ def train_mogp():
     # #X_test.shape:      (3, UM_levels, n_test)
     # #y_train.shape:     (2, UM_levels, n_train)
     # #y_test.shape:      (2, UM_levels, n_test)
-    # #oro_train.shape:   (n_train, ) or (2, n_train)
-    # #oro_test.shape:    (n_test, ) or (2, n_test)
+    # #oro_train.shape:   (2, n_train)
+    # #oro_test.shape:    (2, n_test)
     # #ls_train.shape:    (n_train, )
     # #ls_test.shape:     (n_test, )
     X_train, Y_train, oro_train, ls_train, train_indices= sampler(X, Y, oro, land_sea, n_size=2)
@@ -201,23 +239,29 @@ def train_mogp():
     X_train_ps = X_train[0, 0, :]
     X_test_ps = X_test[0, 0, :]
 
-    # # # Setting up the training dataset
+    # Setting up the training dataset
     train_input, train_target = data_prep(X_train, X_train_ps, oro_train, ls_train, Y_train)
-    # # input = np.load(os.path.join(output_folder, "input.npy"))
-    # # target = np.load(os.path.join(output_folder, "target.npy"))
-    print("input and target", train_input.shape, train_target.shape)
-    # # np.save(os.path.join(output_folder, "input.npy"), input)
-    # # np.save(os.path.join(output_folder, "target.npy"), target)
 
-    # This switch is primarily used for my testing
+    # Optionally save the training data
+    # np.save(os.path.join(output_folder, "input.npy"), input)
+    # np.save(os.path.join(output_folder, "target.npy"), target)
+
+    # Optionally load pre-saved training data
+    # input = np.load(os.path.join(output_folder, "input.npy"))
+    # target = np.load(os.path.join(output_folder, "target.npy"))
+
+    # Sanity check...
+    print("input and target", train_input.shape, train_target.shape)
+
+    # This switch is primarily used for testing. Typically TRAIN_GP will be set to True in `script_variables.py`.
     if TRAIN_GP is True:
-        # # Defining and fitting the MOGP
+        # Defining and fitting the MOGP
         gp = mogp_emulator.MultiOutputGP(train_input.T, train_target, kernel="Matern52", nugget='adaptive')
         gp = mogp_emulator.fit_GP_MAP(gp)
-        # # Save the trained mogp
+        # Save the trained mogp
         pickle.dump(gp, open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "wb"))
     else:
-        #Read in the pre-trained GP
+        # Read in the pre-trained GP
         print(gp_directory_root)
         gp = pickle.load(open(os.path.join(gp_directory_root, f"{GP_name}.pkl"), "rb"))
 
@@ -225,14 +269,16 @@ def train_mogp():
     # # Setting up the testing dataset
     test_input, test_target = data_prep(X_test, X_test_ps, oro_test, ls_test, Y_test)
     print("test and truth", test_input.shape, test_target.shape)
+    
     # Loading the trained mogp from file. Not needed but used to test implementation
-    # np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
-    # np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
+    np.save(os.path.join(gp_directory_root, "test_input.npy"), test_input)
+    np.save(os.path.join(gp_directory_root, "test_target.npy"), test_target)
     # test_target = np.load(os.path.join(gp_directory_root, "test_target.npy"))
+
     # Predict using the MOGP
     stds, uncer, d = gp.predict(test_input.T)
-    # np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
-    # np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
+    np.save(os.path.join(gp_directory_root, "stds.npy"), stds)
+    np.save(os.path.join(gp_directory_root, "uncer.npy"), uncer)
 
     # stds = np.load(os.path.join(gp_directory_root, "stds.npy"))
     # uncer = np.load(os.path.join(gp_directory_root, "uncer.npy"))

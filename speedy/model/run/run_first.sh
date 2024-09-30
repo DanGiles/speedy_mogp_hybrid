@@ -42,28 +42,26 @@ cp $SPEEDY/model/source/*.s .
 echo "Patching configuration parameters"
 if [[ "$nat_res" = "t39" ]]
 then
-    sed -i "s/NTRUN/39/g" mod_atparam.f90
-    sed -i "s/NLON/120/g" mod_atparam.f90
-    sed -i "s/NLAT/60/g" mod_atparam.f90
-    sed -i "s/NSTEPS/72/g" mod_tsteps.f90
+    sed -i '' -e "s/NTRUN/39/g" mod_atparam.f90
+    sed -i '' -e "s/NLON/120/g" mod_atparam.f90
+    sed -i '' -e "s/NLAT/60/g" mod_atparam.f90
+    sed -i '' -e "s/NSTEPS/72/g" mod_tsteps.f90
 elif [[ "$nat_res" = "t30" ]]
 then
-    sed -i "s/NTRUN/30/g" mod_atparam.f90
-    sed -i "s/NLON/96/g" mod_atparam.f90
-    sed -i "s/NLAT/48/g" mod_atparam.f90
-    sed -i "s/NSTEPS/36/g" mod_tsteps.f90
+    sed -i '' -e "s/NTRUN/30/g" mod_atparam.f90
+    sed -i '' -e "s/NLON/96/g" mod_atparam.f90
+    sed -i '' -e "s/NLAT/48/g" mod_atparam.f90
+    sed -i '' -e "s/NSTEPS/36/g" mod_tsteps.f90
 fi
-sed -i "s/NMONTS/12/g" mod_tsteps.f90
-sed -i "s/NMONRS/0/g" mod_tsteps.f90
-sed -i "s/IHOUT/.true./g" mod_tsteps.f90
-sed -i "s/IPOUT/.false./g" mod_tsteps.f90
-sed -i "s/SIXHRRUN/.false./g" mod_tsteps.f90
+sed -i '' -e "s/NMONTS/12/g" mod_tsteps.f90
+sed -i '' -e "s/NMONRS/0/g" mod_tsteps.f90
+sed -i '' -e "s/IHOUT/.true./g" mod_tsteps.f90
+sed -i '' -e "s/IPOUT/.false./g" mod_tsteps.f90
+sed -i '' -e "s/SIXHRRUN/.false./g" mod_tsteps.f90
 
 make -s imp
-
 sh inpfiles.s $nat_res
 
-cp imp $NATURE
 echo "Begin spin-up from $IYYYY/$IMM/$IDD/$IHH"
 FORT2=0
 echo $FORT2 > fort.2
@@ -71,10 +69,10 @@ echo $SYYYY >> fort.2
 echo $SMM >> fort.2
 echo $SDD >> fort.2
 echo $SHH >> fort.2
-time ./imp | tee out.lis
-
+# time ./imp | tee out.lis
+time ./imp > out.lis
 mv $IYYYY$IMM$IDD$IHH.grd $NATURE
- 
+
 echo "Cleaning up"
 cd ..
-rm -rf $TMPDIR
+# rm -rf $TMPDIR

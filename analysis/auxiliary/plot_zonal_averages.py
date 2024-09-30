@@ -2,10 +2,6 @@ import os
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import matplotlib as mpl
-import cartopy.feature as cfeature
-from typing import List
 
 
 hybrid_path = "/Users/dangiles/Documents/Stats/MetOffice/hybrid_modelling/robustness_runs/neutral/myriad/run_1"

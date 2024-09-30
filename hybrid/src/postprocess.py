@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from typing import Tuple
 import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List
 import xarray as xr
 import sys
 
 
-def read_grd(filename) -> np.ndarray:
+def read_grd(filename: str) -> np.ndarray:
+    """Read a SPEEDY Fortran binary file and return a numpy array.
+
+    Args:
+        filename (str): The name of the file to read.
+
+    Returns:
+        np.ndarray: The data from the file.
+    """
     nlon = 96
     nlat = 48
     nlev = 8
@@ -21,7 +28,16 @@ def read_grd(filename) -> np.ndarray:
     data = data.astype(np.float64)
     return data
 
-def read_flx(filename) -> np.ndarray:
+
+def read_flx(filename: str) -> np.ndarray:
+    """Read a SPEEDY Fortran binary file and return a numpy array.
+
+    Args:
+        filename (str): The name of the file to read.
+
+    Returns:
+        np.ndarray: The data from the file.
+    """
     nlon = 96
     nlat = 48
     f = np.fromfile(filename, dtype=np.float64)
@@ -32,7 +48,15 @@ def read_flx(filename) -> np.ndarray:
     return data
 
 
-def read_flux_files_2_nc(folder):
+def read_flux_files_2_nc(folder: str) -> Tuple[xr.Dataset]:
+    """Read the Fortran binary files and return a Dataset with the data.
+
+    Args:
+        folder (str): The folder containing the Fortran binary files.
+
+    Returns:
+        Tuple[xr.Dataset]: The Datasets containing the data.
+    """
     # Loop through all the Fortran binary files
     ds_cc = xr.Dataset()
     ds_tsr = xr.Dataset()
@@ -79,7 +103,15 @@ def read_flux_files_2_nc(folder):
     return ds_cc, ds_tsr, ds_olr
 
 
-def read_files_2_nc(folder):
+def read_files_2_nc(folder: str) -> Tuple[xr.Dataset]:
+    """Read the Fortran binary files and return a Dataset with the temperature, specific humidity, surface pressure and precipitation data.
+
+    Args:
+        folder (str): The folder containing the Fortran binary files.
+
+    Returns:
+        Tuple[xr.Dataset]: The Datasets containing the temperature, specific humidity, surface pressure and precipitation data.
+    """
     # Loop through all the Fortran binary files
     ds_t = xr.Dataset()
     ds_q = xr.Dataset()

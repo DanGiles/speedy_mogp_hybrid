@@ -1,22 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from typing import Tuple
 import numpy as np
-from datetime import datetime, date, timedelta
-from typing import Dict, List
+from datetime import datetime, timedelta
 import xarray as xr
 
 from script_variables import *
 
-# def make_dir(path: str) -> None:
-#     #do not empty directory if it doesn't exist!
-#     if os.path.isdir(path):
-#         import shutil
-#         shutil.rmtree(path)
-#     # make directory
-#     os.mkdir(path)
 
-def read_grd(filename) -> np.ndarray:
+######################## READ ME ########################
+# This script is no longer necessary as /hybrid/src/postprocess.py has been updated to include the functionality of this script.
+# This script is used to create netCDF files from the Fortran binary files output by SPEEDY and HYBRID.
+# Ensure postprocess.py is executed after running the model. See `robust_runs.sh` for an example.
+#########################################################
+
+
+def read_grd(filename: str) -> np.ndarray:
+    """Read a SPEEDY Fortran binary file and return a numpy array.
+
+    Args:
+        filename (str): The name of the file to read.
+
+    Returns:
+        np.ndarray: The data from the file.
+    """
     nv3d = 4
     nv2d = 2
     f = np.fromfile(filename, dtype=np.float32)
@@ -25,47 +33,17 @@ def read_grd(filename) -> np.ndarray:
     data = data.astype(np.float64)
     return data
 
-def loop_through_outputs(folder, filenames, n) -> Dict[str, np.ndarray]:
 
-    data = np.zeros((nlon, nlat, 34))
-    fluxes = np.zeros((nlon, nlat, 10))
-    T = np.zeros((nlon, nlat, nlev, len(filenames)+1))
-    Q = np.zeros((nlon, nlat, nlev, len(filenames)+1))
-
-    print(len(filenames))
-    flux_count = 0
-    count = 0
-
-    # for date in filenames:
-    #     print(date)
-    for file in os.listdir(folder):
-        f = os.path.join(folder, file)
-        # checking if it is a file and if correct date
-        if os.path.isfile(f) and ".grd" in file and "_fluxes.grd" not in file:
-            print(file, count)
-            fdata = read_grd(f)
-            data = data + fdata
-            T[..., count] = fdata[..., 16:24]
-            Q[..., count] = fdata[..., 24:32]
-            count = count + 1
-        elif os.path.isfile(f) and "_fluxes.grd" in file:
-            fdata = read_flx(f)
-            fluxes = fluxes + fdata
-            flux_count = flux_count + 1
-
-    data = data/count
-    fluxes = fluxes/flux_count
-    return data, fluxes, T, Q
-
-def read_flx(filename) -> np.ndarray:
-    f = np.fromfile(filename, dtype=np.float64)
-    # shape = (nlon, nlat, nrec)
-    shape = (nlon, nlat, -1)
-    data = np.reshape(f, shape, order="F")
-    # data = data.astype(np.float64)
-    return data
-
-def read_files_2_precip_nc(folder, n_files):
+def read_files_2_precip_nc(folder: str, n_files: int) -> xr.Dataset:
+    """Read the Fortran binary files and return a Dataset with the precipitation data.
+    
+    Args:
+        folder (str): The folder containing the Fortran binary files.
+        n_files (int): The number of files to read.
+        
+    Returns:
+        xr.Dataset: The Dataset containing the precipitation data.
+    """
     # Loop through all the Fortran binary files
 
     ds_precip = xr.Dataset()
@@ -75,7 +53,6 @@ def read_files_2_precip_nc(folder, n_files):
         f = os.path.join(folder, filename)
         # checking if it is a file and if correct date
         if os.path.isfile(f) and "grd" in f and "fluxes.grd" not in f:
-        # if os.path.isfile(f) and date in f and "_fluxes.grd" not in f:
             # Create a DataArray for each level along the 'z' dimension
             fdata = read_grd(f)
             precip.append(fdata[:, :, 33])
@@ -87,7 +64,16 @@ def read_files_2_precip_nc(folder, n_files):
     return ds_precip
 
 
-def read_files_2_nc(folder, n_files):
+def read_files_2_nc(folder: str, n_files: int) -> Tuple[xr.Dataset]:
+    """Read the Fortran binary files and return a Dataset with the temperature, specific humidity, surface pressure and precipitation data.
+
+    Args:
+        folder (str): The folder containing the Fortran binary files.
+        n_files (int): The number of files to read.
+
+    Returns:
+        Tuple[xr.Dataset]: The Datasets containing the temperature, specific humidity, surface pressure and precipitation data.
+    """
     # Loop through all the Fortran binary files
     ds_t = xr.Dataset()
     ds_q = xr.Dataset()
@@ -134,6 +120,9 @@ def read_files_2_nc(folder, n_files):
     ds_precip[var_name] = da_precip
     
     return ds_t, ds_q, ds_ps, ds_precip
+
+
+
 #######################################################
 # Find the file names
 

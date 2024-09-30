@@ -1,3 +1,5 @@
+# Run this script AFTER running create_npy.py
+
 import os
 import numpy as np
 import xarray as xr
