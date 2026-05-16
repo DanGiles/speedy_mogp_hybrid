@@ -23,6 +23,9 @@ cmocean = "^4.0.3"
 cdsapi = "^0.7.3"
 gcsfs = "^2024.9.0.post1"
 zarr = "^2.18.3"
+# Security patches for transitive dependencies
+aiohttp = ">=3.13.5"
+urllib3 = ">=2.6.0,<3"
 
 
 
